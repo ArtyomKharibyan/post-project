@@ -4,16 +4,21 @@ import SignUp from "../components/authentication/SignUp";
 import SignIn from "../components/authentication/SignIn";
 import App from "../App";
 import ProtectedRoute from "./ProtectedRoute";
-import Posts from "../components/Posts";
+import CreatePost from "../components/CreatePost";
+import Feed from "../components/Feed";
 
-const Router = () => (
-    <Routes>
-        <Route path="/" element={<SignUp/>}/>
-        <Route path="/SignUp" element={<SignUp/>}/>
-        <Route path="/SignIn" element={<SignIn/>}/>
-        <Route path="create-post" element={<Posts/>}/>
-        <Route path = "/Account" element={<ProtectedRoute><App/></ProtectedRoute>}/>
-    </Routes>
+const Router = () => {
+
+        return (
+        <Routes>
+                <Route path="/" element={<SignUp/>}/>
+                <Route path="/signUp" element={<SignUp/>}/>
+                <Route path="/signIn" element={<SignIn/>}/>
+                <Route path="/posts" element=<CreatePost/>/>
+                <Route path="/feed" element={<Feed/>}/>
+                <Route path="/profile" element={<ProtectedRoute><App/></ProtectedRoute>}/>
+        </Routes>
 )
+}
 
 export default Router

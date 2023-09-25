@@ -6,14 +6,12 @@
     color: #00040a;
 }
 
-.logo {
-    height: 50px;
-    width: 100px;
-}
-
-.post {
-    display: flex;
-    justify-content: right;
-    float: right;
-    width: 100%;
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom right, #26bdbd, #8720d3);
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
 }

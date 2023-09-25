@@ -1,4 +1,4 @@
-import React, {createContext, useContext, ReactNode, useState, useEffect} from "react";
+import React, { createContext, useContext, ReactNode, useState, useEffect, Dispatch, SetStateAction } from "react";
 import {
     createUserWithEmailAndPassword,
     UserCredential,
@@ -9,7 +9,7 @@ import {
     GoogleAuthProvider,
     signInWithPopup
 } from "firebase/auth";
-import {auth} from "../firebase/Firebase";
+import { auth } from "../firebase/Firebase";
 
 interface UserAuthContextProviderProps {
     children: ReactNode;
@@ -21,27 +21,56 @@ interface UserAuthContextValue {
     user: User | null;
     signIn: (email: string, password: string) => Promise<UserCredential>;
     googleSignIn: () => void;
+    selectedPost: null | string;
+    setSelectedPost: Dispatch<SetStateAction<string | null>>;
+    isAuth: boolean;
+    setIsAuth: Dispatch<SetStateAction<boolean>>;
+    profileData: UserProfile | null
+    setProfileData: Dispatch<SetStateAction<UserProfile | null>>;
+    profileId : number | undefined
+    setProfileId: Dispatch<SetStateAction<number | undefined>>;
 }
 
-const UserContext = createContext<UserAuthContextValue | undefined>(undefined);
+export const UserContext = createContext<UserAuthContextValue | undefined>(
+    undefined
+);
 
-export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = ({children}) => {
+interface UserProfile {
+    id: number
+    email: string;
+    name: string;
+    surname: string;
+}
+
+export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
+    const [selectedPost, setSelectedPost] = useState<string | null>(null);
+    const [isAuth, setIsAuth] = useState(localStorage.getItem("isAuth") === "true");
+    const [profileData, setProfileData] = useState<UserProfile | null>(null);
+    const [profileId, setProfileId] = useState<number | undefined>(profileData?.id);
 
     const googleSignIn = () => {
         const provider = new GoogleAuthProvider()
+        setIsAuth(true)
+        localStorage.setItem("isAuth", "true");
         signInWithPopup(auth, provider)
     }
 
     const createUser = async (email: string, password: string) => {
+        setIsAuth(true)
+        localStorage.setItem("isAuth", "true");
         return createUserWithEmailAndPassword(auth, email, password);
     }
 
     const signIn = async (email: string, password: string) => {
+        setIsAuth(true)
+        localStorage.setItem("isAuth", "true");
         return signInWithEmailAndPassword(auth, email, password)
     }
 
     const logOut = () => {
+        setIsAuth(false)
+        localStorage.setItem("isAuth", "false");
         return signOut(auth);
     }
 
@@ -63,6 +92,14 @@ export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = (
         user,
         signIn,
         googleSignIn,
+        selectedPost,
+        setSelectedPost,
+        isAuth,
+        setIsAuth,
+        profileData,
+        setProfileData,
+        profileId,
+        setProfileId
     };
 
     return (

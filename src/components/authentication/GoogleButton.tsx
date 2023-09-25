@@ -9,8 +9,10 @@ const GoogleButton = () => {
 
     const handleGoogleSignIn = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault();
+        console.log(user?.displayName)
         try {
             await googleSignIn();
+
         } catch (error) {
             console.error(error);
         }
@@ -19,7 +21,7 @@ const GoogleButton = () => {
 
     useEffect(() => {
         if (user !== null) {
-            navigate("/Account")
+            navigate("/profile")
         }
     }, [navigate, user])
 

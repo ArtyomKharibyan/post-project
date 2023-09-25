@@ -1,42 +1,99 @@
-import React, { useState } from "react";
-import GoogleButton from "./GoogleButton";
-import {Link, useNavigate} from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { UserAuth } from "../../context/UserAuthContext";
+import { db } from "../../firebase/Firebase";
+import { collection, doc, setDoc } from "firebase/firestore";
+import { updateProfile } from "firebase/auth";
+import axios from '../server/Axios';
+import GoogleButton from "./GoogleButton";
 
 const SignUp = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [name, setName] = useState("");
+    const [surname, setSurname] = useState("");
     const [error, setError] = useState("");
+    const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
+    const navigate = useNavigate();
+    const { createUser } = UserAuth();
 
-    const navigate = useNavigate()
+    const validateFields = () => {
+        const isValid = name.trim() !== "" && surname.trim() !== "" && email.trim() !== "" && password.trim() !== "";
+        setIsSubmitDisabled(!isValid);
+    };
 
-    const {createUser} = UserAuth();
+    useEffect(() => {
+        validateFields();
+    }, [validateFields]);
 
-    const handleClick = async (
-        e: React.MouseEvent<HTMLButtonElement, MouseEvent>
-    ) => {
+    const fetchUserProfile = async () => {
+        try {
+            const response = await axios.post('/api/profile', {
+                name,
+                surname,
+                email
+            });
+
+            if (response.status === 200) {
+                const userData = response.data;
+                console.log(userData)
+                return response;
+            }
+            else {
+                console.error('Error fetching user profile:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+        }
+    };
+
+    const handleClick = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault();
-        setError("");
+        setError('');
+
         try {
             if (createUser) {
-                await createUser(email, password);
-                navigate("/Account")
+                const userCredential = await createUser(email, password);
+
+                const uid = userCredential.user.uid;
+
+                const fullName = `${name} ${surname}`;
+
+                const user = {
+                    name,
+                    surname,
+                    email,
+                };
+
+                console.log(user)
+
+                await updateProfile(userCredential.user, {
+                    displayName: fullName,
+                });
+
+                const usersCollectionRef = collection(db, 'users');
+                const userDocRef = doc(usersCollectionRef, uid);
+                await setDoc(userDocRef, { name, surname });
+
+                await fetchUserProfile();
+
+                navigate('/profile');
             } else {
-                setError("createUser function is undefined");
+                setError('createUser function is undefined');
             }
         } catch (e) {
             if (e instanceof Error) {
                 setError(e.message);
-                console.log(e.message);
-                console.log(error);
+                console.error(e.message);
+                console.error(error);
             }
         }
     };
 
     return (
-        <div className="flex justify-center items-center min-h-screen w-full bg-slate-100">
+        <div className="flex justify-center items-center min-h-screen w-full">
             <div
-                className="w-96 h-600 p-5 relative bg-transparent border-2 border-right/50 text-center rounded-xl block bg-slate-50">
+                className="w-96 h-600 p-5 relative border-2 border-right/50 text-center rounded-xl block bg-slate-100">
                 <p className="font-brush-script text-4xl p-5">WebLab</p>
                 <div className="grid grid-rows-[80px]">
                     <GoogleButton/>
@@ -51,11 +108,13 @@ const SignUp = () => {
                         className="w-full px-5 py-3 my-2 border-box"
                         type="text"
                         placeholder="Name"
+                        onChange={(e) => setName(e.target.value)}
                     />
                     <input
                         className="w-full px-5 py-3 my-2 border-box"
                         type="text"
                         placeholder="Surname"
+                        onChange={(e) => setSurname(e.target.value)}
                     />
                     <input
                         className="w-full px-5 py-3 my-2 border-box"
@@ -71,12 +130,15 @@ const SignUp = () => {
                     />
                     <div className="w-full p-4">
                         <button onClick={handleClick}
-                            className=" w-full bg-blue-500 text-white font-semibold rounded-md px-10 py-2 shadow-md hover:bg-blue-400 transition duration-400 ease-in-out">
+                                disabled={isSubmitDisabled} // Disable the button when required fields are empty
+                                className={`w-full bg-blue-500 text-white font-semibold rounded-md px-10 py-2 shadow-md hover:bg-blue-400 transition duration-400 ease-in-out ${isSubmitDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
                             Sign up
                         </button>
                     </div>
-                    <div className="">
+                    <div>
                         Already have an account? <Link className="text-sky-500" to="/SignIn">Sign In</Link>
+                        <br/>
+                        Login as <Link className = "text-sky-500" to={"/feed"}>Guest</Link>
                     </div>
                 </div>
             </div>
