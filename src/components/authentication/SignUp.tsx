@@ -6,6 +6,8 @@ import { collection, doc, setDoc } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import axios from '../server/Axios';
 import GoogleButton from "./GoogleButton";
+import firebase from "firebase/compat/app";
+import "firebase/compat/auth";
 
 const SignUp = () => {
     const [email, setEmail] = useState("");
@@ -15,7 +17,7 @@ const SignUp = () => {
     const [error, setError] = useState("");
     const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
     const navigate = useNavigate();
-    const { createUser } = UserAuth();
+    const { createUser, profileData, setProfileData } = UserAuth();
 
     const validateFields = () => {
         const isValid = name.trim() !== "" && surname.trim() !== "" && email.trim() !== "" && password.trim() !== "";
@@ -24,11 +26,11 @@ const SignUp = () => {
 
     useEffect(() => {
         validateFields();
-    }, [validateFields]);
+    }, [name, surname, email, password]);
 
     const fetchUserProfile = async () => {
         try {
-            const response = await axios.post('/api/profile', {
+            const response = await axios.post("http://192.168.10.146:5000/api/profile", {
                 name,
                 surname,
                 email
@@ -36,7 +38,7 @@ const SignUp = () => {
 
             if (response.status === 200) {
                 const userData = response.data;
-                console.log(userData)
+                setProfileData(userData);
                 return response;
             }
             else {
@@ -47,7 +49,17 @@ const SignUp = () => {
         }
     };
 
-    const handleClick = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    const storeTokenInLocalStorage = async (userCredential: firebase.auth.UserCredential) => {
+        try {
+            // @ts-ignore
+            const idToken = await userCredential.user.getIdToken(true);
+            localStorage.setItem("token", idToken);
+        } catch (error) {
+            console.error('Error storing token in localStorage:', error);
+        }
+    };
+
+    const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         setError('');
 
@@ -65,8 +77,6 @@ const SignUp = () => {
                     email,
                 };
 
-                console.log(user)
-
                 await updateProfile(userCredential.user, {
                     displayName: fullName,
                 });
@@ -74,6 +84,9 @@ const SignUp = () => {
                 const usersCollectionRef = collection(db, 'users');
                 const userDocRef = doc(usersCollectionRef, uid);
                 await setDoc(userDocRef, { name, surname });
+
+                // @ts-ignore
+                await storeTokenInLocalStorage(userCredential);
 
                 await fetchUserProfile();
 
@@ -85,7 +98,6 @@ const SignUp = () => {
             if (e instanceof Error) {
                 setError(e.message);
                 console.error(e.message);
-                console.error(error);
             }
         }
     };
@@ -138,7 +150,7 @@ const SignUp = () => {
                     <div>
                         Already have an account? <Link className="text-sky-500" to="/SignIn">Sign In</Link>
                         <br/>
-                        Login as <Link className = "text-sky-500" to={"/feed"}>Guest</Link>
+                        Login as <Link className="text-sky-500" to={"/feed"}>Guest</Link>
                     </div>
                 </div>
             </div>

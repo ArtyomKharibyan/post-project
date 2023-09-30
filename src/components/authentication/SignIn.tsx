@@ -103,7 +103,7 @@ const SignIn = () => {
                         </button>
                     </div>
                     <div>
-                        Don't have an account? <Link className="text-sky-500" to="/SignUp">Sign Up</Link>
+                        Don't have an account? <Link className="text-sky-500" to="/signUp">Sign Up</Link>
                     </div>
                 </div>
             </div>

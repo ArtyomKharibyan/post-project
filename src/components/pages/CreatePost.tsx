@@ -1,42 +1,25 @@
-import React, { useEffect, useState } from "react";
-import {
-    getDownloadURL,
-    ref,
-    uploadBytes,
-} from "firebase/storage";
-import {
-    addDoc,
-    collection,
-    deleteDoc,
-    doc,
-    getDocs,
-    query,
-    updateDoc,
-    where,
-} from "firebase/firestore";
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth, db, storage } from "../firebase/Firebase";
-import { useNavigate } from "react-router-dom";
+import React, {useEffect, useState} from "react";
+import {getDownloadURL, ref, uploadBytes,} from "firebase/storage";
+import {onAuthStateChanged} from 'firebase/auth';
+import {auth, storage} from "../../firebase/Firebase";
+import {useNavigate} from "react-router-dom";
 import Header from "./Header";
 import firebase from "firebase/compat";
-import axios from "./server/Axios";
-import { UserAuth } from "../context/UserAuthContext";
+import axios from "../server/Axios";
+import {UserAuth} from "../../context/UserAuthContext";
 
 interface Post {
     id: string;
-    title: string;
-    postText: string;
-    author: {
-        name: string | null;
-        id: string | null;
-    };
     images: string[];
+    postText: string;
+    title: string;
+    name: string;
+    surname: string;
 }
 
 interface UserData {
     username: string;
     password: string;
-    prevState: null
 }
 
 type AuthStateChangedCallback = (user: firebase.User | null) => void;
@@ -48,13 +31,14 @@ const Modal: React.FC = () => {
     const [postText, setPostText] = useState<string>("");
     const [imageUpload, setImageUpload] = useState<File | null>(null);
     const [user, setUser] = useState<UserData | null>(null);
-    const [imageUrl, setImageUrl] = useState<string | null>(
-        localStorage.getItem("imageUrl") || null
-    );
-    const [posts, setPosts] = useState<Post[]>([]);
-    const [editingPost, setEditingPost] = useState<Post | null>(null);
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [postData, setPostData] = useState<Post[]>([]);
+    const [loadingUserPosts, setLoadingUserPosts] = useState(false);
 
-    const { profileData, setProfileData } = UserAuth();
+    const [editingPost, setEditingPost] = useState<Post | null>(null);
+    const [posts, setPosts] = useState<Post[]>([]);
+
+    const {profileData, setProfileData} = UserAuth();
     const profileId = profileData?.id ?? "";
 
     const navigate = useNavigate();
@@ -67,40 +51,17 @@ const Modal: React.FC = () => {
         const url = await getDownloadURL(imageRef);
         setImageUrl(url);
         setLoading(false);
-        localStorage.setItem("imageUrl", url);
     };
 
-    const postCollectionRef = collection(db, "posts");
-
-    const fetchPosts = async () => {
-        if (!auth.currentUser) return;
-
-        const userUID = auth.currentUser.uid;
-        const postsQuery = query(
-            collection(db, "posts"),
-            where("author.id", "==", userUID)
-        );
-        const postsSnapshot = await getDocs(postsQuery);
-        const postsData: Post[] = [];
-        postsSnapshot.forEach((doc) => {
-            const postData = doc.data() as Post;
-            postData.id = doc.id;
-            postsData.push(postData);
-        });
-        setPosts(postsData);
-    };
-
-    useEffect(() => {
-        fetchPosts();
-    }, []);
+    console.log(profileId)
 
     const postToServer = async () => {
         try {
             const response = await axios.post(
-                "http://192.168.10.81:5000/api/post",
+                "http://192.168.10.146:5000/api/post",
                 {
                     title,
-                    imageUrl,
+                    image : imageUrl,
                     postText,
                     profileId: profileId,
                 }
@@ -122,6 +83,8 @@ const Modal: React.FC = () => {
                     });
                 }
 
+                console.log(profileData)
+
                 return response;
             } else {
                 console.error("Error fetching user profile:", response.statusText);
@@ -131,61 +94,63 @@ const Modal: React.FC = () => {
         }
     };
 
-    const fetchData = async () => {
-        try {
-            const response = await axios.get(
-                `http://192.168.10.81:5000/api/post${profileId}`,
-                {
-                    params: {
-                        title,
-                        imageUrl,
-                        postText,
-                        profileId: profileId,
-                    },
-                }
-            );
-
-            if (response.status === 200) {
-                const postData = response.data;
-                console.log("Fetched Post Data:", postData);
-
-                return postData;
-            } else {
-                console.error("Error fetching data:", response.statusText);
+    useEffect(() => {
+        const getPost = async () => {
+            setLoadingUserPosts(true);
+            try {
+                const response = await axios.get(`http://192.168.10.146:5000/api/post/${profileId}`);
+                const postDataWithImages: Post[] = response.data.map((post: any) => ({
+                    id: post.id,
+                    images: [post.image], // Assuming image is a string
+                    title: post.title,
+                    postText: post.postText,
+                    name: post.name, // Add missing properties with default values or retrieve them from the response
+                    surname: post.surname, // Add missing properties with default values or retrieve them from the response
+                }));
+                setPostData(postDataWithImages);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            } finally {
+                setLoadingUserPosts(false);
             }
-        } catch (error) {
-            console.error("Network error:", error);
-        }
-    };
-
-    const createPost = async () => {
-        await uploadFile();
-        await fetchData();
-        await postToServer();
-
-        const postData: Post = {
-            id: "",
-            title,
-            postText,
-            author: {
-                name: auth.currentUser?.displayName || null,
-                id: auth.currentUser?.uid || null,
-            },
-            images: imageUrl ? [imageUrl] : [],
         };
 
-        try {
-            const docRef = await addDoc(postCollectionRef, postData);
-            setLoading(false);
-            console.log("Document written with ID: ", docRef.id);
-            postData.id = docRef.id;
-        } catch (error) {
-            console.error("Error adding document: ", error);
-        }
+        getPost();
 
-        setPosts((prevPosts: Post[]) => [...prevPosts, postData]);
-        navigate("/posts");
-        setShowModal(false);
+    }, [profileId]);
+
+
+    const createPost = async () => {
+        try {
+            setLoading(true);
+
+            await uploadFile();
+            const response = await postToServer();
+
+            if (response) {
+                const newPost = {
+                    id: response.data.id,
+                    images: [imageUrl || ""],
+                    title,
+                    postText,
+                };
+
+                // @ts-ignore
+                setPostData((prevPostData) => [newPost, ...prevPostData]);
+
+                resetForm();
+                setShowModal(false);
+
+                // @ts-ignore
+                setPosts((prevPosts: Post[]) => [newPost, ...prevPosts]);
+
+                navigate("/posts");
+            }
+        } catch (error) {
+            console.error("Error creating post: ", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const authStateChanged: AuthStateChangedCallback = (user) => {
@@ -193,10 +158,9 @@ const Modal: React.FC = () => {
             const userData: UserData = {
                 username: user.displayName || "",
                 password: "",
-                prevState: null,
             };
+            console.log(userData)
             setUser(userData);
-            fetchPosts();
         } else {
             setPosts([]);
         }
@@ -241,7 +205,10 @@ const Modal: React.FC = () => {
 
     const handleDeletePost = async (postToDelete: Post) => {
         try {
-            await deleteDoc(doc(db, "posts", postToDelete.id));
+            await axios.delete(`http://192.168.10.146:5000/api/post/${postToDelete.id}`);
+            setPostData((prevPostData) =>
+                prevPostData.filter((post) => post.id !== postToDelete.id)
+            );
             setPosts((prevPosts) =>
                 prevPosts.filter((post) => post.id !== postToDelete.id)
             );
@@ -270,12 +237,26 @@ const Modal: React.FC = () => {
         if (!editingPost) return;
 
         try {
-            const postDocRef = doc(db, "posts", editingPost.id);
-            await updateDoc(postDocRef, {
+            await axios.patch(`http://192.168.10.146:5000/api/post/${editingPost.id}`, {
                 title: editingPost.title,
                 postText: editingPost.postText,
                 images: editingPost.images,
+                // Add other properties like name and surname if required
             });
+
+            setPostData((prevPostData) =>
+                prevPostData.map((post) =>
+                    post.id === editingPost.id
+                        ? {
+                            ...post,
+                            title: editingPost.title,
+                            postText: editingPost.postText,
+                            images: editingPost.images,
+                            // Add other properties like name and surname if required
+                        }
+                        : post
+                )
+            );
 
             setPosts((prevPosts) =>
                 prevPosts.map((post) =>
@@ -296,13 +277,16 @@ const Modal: React.FC = () => {
         }
     };
 
+    console.log(profileData)
+
+
     useEffect(() => {
-        console.log(posts);
+        console.log(posts, 378193717319);
     }, [posts]);
 
     return (
         <div>
-            <Header />
+            <Header/>
             {loading && <div>Loading...</div>}
             <div>
                 <div className="flex justify-center items-center">
@@ -314,45 +298,45 @@ const Modal: React.FC = () => {
                         Open Create Post Modal
                     </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
-                    {posts.map((post, index) => (
-                        <div
-                            key={index}
-                            className="border border-gray-300 border-none my-4 bg-slate-100 rounded-2xl"
-                        >
-                            <div>
-                                {post.images.map((image, imgIndex) => (
-                                    <img
-                                        key={imgIndex}
-                                        src={image}
-                                        alt={`${imgIndex}`}
-                                        className="w-full h-80 rounded-tl-2xl rounded-tr-2xl"
-                                    />
-                                ))}
-                            </div>
-                            <div className="min-w-2xl p-2">
-                                <p className="text-xl font-semibold mt-4">{post.title}</p>
-                                <div className="text-center p-5 text-gray-600 overflow-hidden">
-                                    {post.postText}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5">
+                    {postData && postData.length > 0 && (
+                        postData.map((post, index) => (
+                            <div
+                                key={index}
+                                className="border border-gray-300 border-none my-4 bg-slate-100 rounded-2xl"
+                            >
+                                {!loadingUserPosts && postData.length === 0 && <div>No posts available.</div>}
+                                <div className="min-w-2xl">
+                                    {post.images?.length > 0 && (
+                                        <img
+                                            src={post.images[0]}
+                                            alt=""
+                                            className="w-full h-80 rounded-tl-2xl rounded-tr-2xl"
+                                        />
+                                    )}
+                                    <p className="text-xl font-semibold p-3">{post.title}</p>
+                                    <div className="text-center p-5 text-gray-600 overflow-hidden">
+                                        {post.postText}
+                                    </div>
+                                </div>
+                                <div className="bg-gray-300 h-px w-full mt-4" />
+                                <div className="mt-4 relative bottom-2 left-2">
+                                    <button
+                                        onClick={() => handleDeletePost(post)}
+                                        className="mr-2 bg-red-500 text-white px-2 py-1 rounded"
+                                    >
+                                        Delete
+                                    </button>
+                                    <button
+                                        onClick={() => handleEditPost(post)}
+                                        className="bg-blue-500 text-white px-2 py-1 rounded"
+                                    >
+                                        Edit
+                                    </button>
                                 </div>
                             </div>
-                            <div className="bg-gray-300 h-px w-full mt-4" />
-                            <div className="mt-4 relative bottom-2 left-2">
-                                <button
-                                    onClick={() => handleDeletePost(post)}
-                                    className="mr-2 bg-red-500 text-white px-2 py-1 rounded"
-                                >
-                                    Delete
-                                </button>
-                                <button
-                                    onClick={() => handleEditPost(post)}
-                                    className="bg-blue-500 text-white px-2 py-1 rounded"
-                                >
-                                    Edit
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             </div>
             {showModal && (
@@ -387,7 +371,7 @@ const Modal: React.FC = () => {
                                             ref={fileInputRef}
                                             key={imageUrl || undefined}
                                             onChange={handleImageChange}
-                                            style={{ display: "none" }}
+                                            style={{display: "none"}}
                                         />
                                         {imageUrl && (
                                             <div className="relative">
@@ -466,7 +450,7 @@ const Modal: React.FC = () => {
                             type="text"
                             value={editingPost.title}
                             onChange={(e) =>
-                                setEditingPost({ ...editingPost, title: e.target.value })
+                                setEditingPost({...editingPost, title: e.target.value})
                             }
                         />
                         <textarea
@@ -474,7 +458,7 @@ const Modal: React.FC = () => {
                             className="resize-none border border-silver-300 h-24 rounded-md"
                             value={editingPost.postText}
                             onChange={(e) =>
-                                setEditingPost({ ...editingPost, postText: e.target.value })
+                                setEditingPost({...editingPost, postText: e.target.value})
                             }
                         />
                         <div className=" p-10 grid justify-center items-center w-full">
@@ -497,5 +481,4 @@ const Modal: React.FC = () => {
         </div>
     );
 };
-
-export default Modal;
+export default Modal

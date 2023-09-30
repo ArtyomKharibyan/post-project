@@ -1,12 +1,13 @@
-import React  from 'react';
+import React from 'react';
+
 import './App.css';
-import Header from "./components/Header";
+import Header from "./components/pages/Header";
 
 function App() {
 
     return (
         <div className="h-800">
-            <Header  />
+            <Header/>
         </div>
     );
 }

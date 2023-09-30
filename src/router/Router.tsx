@@ -4,8 +4,8 @@ import SignUp from "../components/authentication/SignUp";
 import SignIn from "../components/authentication/SignIn";
 import App from "../App";
 import ProtectedRoute from "./ProtectedRoute";
-import CreatePost from "../components/CreatePost";
-import Feed from "../components/Feed";
+import CreatePost from "../components/pages/CreatePost";
+import Feed from "../components/pages/Feed";
 
 const Router = () => {
 

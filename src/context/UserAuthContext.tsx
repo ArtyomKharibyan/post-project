@@ -74,6 +74,8 @@ export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = (
         return signOut(auth);
     }
 
+    console.log(auth.currentUser?.uid)
+
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             console.log(currentUser);

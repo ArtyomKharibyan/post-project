@@ -1,5 +1,4 @@
-import React, { ReactNode } from "react";
-import { Navigate } from "react-router";
+import React, { ReactNode, useEffect } from "react";
 import { UserAuth } from "../context/UserAuthContext";
 
 interface ProtectedRouteProps {
@@ -9,9 +8,11 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     const { user } = UserAuth();
 
-    if (!user) {
-        return <Navigate to="/" />;
-    }
+    useEffect(() => {
+        if (!user) {
+            console.log("stexica");
+        }
+    }, [user]);
 
     return <>{children}</>;
 };
