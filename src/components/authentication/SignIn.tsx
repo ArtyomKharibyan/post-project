@@ -8,8 +8,18 @@ const SignIn = () => {
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [error, setError] = useState<string>("");
+    const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
     const navigate = useNavigate();
     const { signIn, googleSignIn } = UserAuth();
+
+    const validateFields = () => {
+        const isValid = email.trim() !== "" && password.trim() !== "";
+        setIsSubmitDisabled(!isValid);
+    };
+
+    useEffect(() => {
+        validateFields()
+    }, [password, email])
 
     const handleGoogleSignIn = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault();
@@ -19,6 +29,7 @@ const SignIn = () => {
             console.error(error);
         }
     };
+
 
     useEffect(() => {
         const checkUser = (user: firebase.User | null) => {
@@ -62,7 +73,7 @@ const SignIn = () => {
             <div className="w-96 h-600 p-5 relative border-2 border-right/50 text-center rounded-xl block bg-slate-100">
                 <p className="font-brush-script text-4xl p-5">WebLab</p>
                 <div className="grid grid-rows-[60px]">
-                    {error && <p color="error">{error}</p>}
+                     <p className = "text-red-700">{error}</p>
                     <input
                         className="w-full px-5 py-3 my-2 border-box"
                         type="email"
@@ -76,10 +87,9 @@ const SignIn = () => {
                         onChange={(e) => setPassword(e.target.value)}
                     />
                     <div className="w-full p-5">
-                        <button
-                            onClick={handleClick}
-                            className="w-full bg-blue-500 text-white font-semibold rounded-md px-10 py-2 shadow-md hover:bg-blue-400 transition duration-400 ease-in-out"
-                        >
+                        <button onClick={handleClick}
+                                disabled={isSubmitDisabled} // Disable the button when required fields are empty
+                                className={`w-full bg-blue-500 text-white font-semibold rounded-md px-10 py-2 shadow-md hover:bg-blue-400 transition duration-400 ease-in-out ${isSubmitDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
                             Sign in
                         </button>
 

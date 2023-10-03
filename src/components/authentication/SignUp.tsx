@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { UserAuth } from "../../context/UserAuthContext";
-import { db } from "../../firebase/Firebase";
-import { collection, doc, setDoc } from "firebase/firestore";
-import { updateProfile } from "firebase/auth";
-import axios from '../server/Axios';
-import GoogleButton from "./GoogleButton";
-import firebase from "firebase/compat/app";
-import "firebase/compat/auth";
+import axios from '../server/axios';
+import { updateProfile, UserCredential} from "firebase/auth";
+import {collection, doc, setDoc} from "firebase/firestore";
+import GoogleButton from "./GoogleButton"
+import {db} from "../../firebase/firebase";
 
 const SignUp = () => {
+    const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [name, setName] = useState("");
@@ -17,15 +16,10 @@ const SignUp = () => {
     const [error, setError] = useState("");
     const [isSubmitDisabled, setIsSubmitDisabled] = useState(true);
     const navigate = useNavigate();
-    const { createUser, profileData, setProfileData } = UserAuth();
-
-    const validateFields = () => {
-        const isValid = name.trim() !== "" && surname.trim() !== "" && email.trim() !== "" && password.trim() !== "";
-        setIsSubmitDisabled(!isValid);
-    };
+    const {createUser, setProfileData} = UserAuth();
 
     useEffect(() => {
-        validateFields();
+        setIsSubmitDisabled(!(name.trim() !== "" && surname.trim() !== "" && email.trim() !== "" && password.trim() !== ""));
     }, [name, surname, email, password]);
 
     const fetchUserProfile = async () => {
@@ -36,12 +30,13 @@ const SignUp = () => {
                 email
             });
 
+            console.log(response)
+
             if (response.status === 200) {
                 const userData = response.data;
                 setProfileData(userData);
                 return response;
-            }
-            else {
+            } else {
                 console.error('Error fetching user profile:', response.statusText);
             }
         } catch (error) {
@@ -49,9 +44,8 @@ const SignUp = () => {
         }
     };
 
-    const storeTokenInLocalStorage = async (userCredential: firebase.auth.UserCredential) => {
+    const storeTokenInLocalStorage = async (userCredential: UserCredential) => {
         try {
-            // @ts-ignore
             const idToken = await userCredential.user.getIdToken(true);
             localStorage.setItem("token", idToken);
         } catch (error) {
@@ -59,33 +53,23 @@ const SignUp = () => {
         }
     };
 
-    const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleClick = async (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         setError('');
+        setLoading(true);
 
         try {
             if (createUser) {
                 const userCredential = await createUser(email, password);
-
-                const uid = userCredential.user.uid;
+                const user = userCredential.user;
 
                 const fullName = `${name} ${surname}`;
-
-                const user = {
-                    name,
-                    surname,
-                    email,
-                };
-
-                await updateProfile(userCredential.user, {
-                    displayName: fullName,
-                });
+                await updateProfile(user, { displayName: fullName });
 
                 const usersCollectionRef = collection(db, 'users');
-                const userDocRef = doc(usersCollectionRef, uid);
+                const userDocRef = doc(usersCollectionRef, user.uid);
                 await setDoc(userDocRef, { name, surname });
 
-                // @ts-ignore
                 await storeTokenInLocalStorage(userCredential);
 
                 await fetchUserProfile();
@@ -99,6 +83,8 @@ const SignUp = () => {
                 setError(e.message);
                 console.error(e.message);
             }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -109,7 +95,7 @@ const SignUp = () => {
                 <p className="font-brush-script text-4xl p-5">WebLab</p>
                 <div className="grid grid-rows-[80px]">
                     <GoogleButton/>
-
+                    <p className = "text-red-700">{error}</p>
                     <div className="flex justify-center items-center text-center">
                         <div className="bg-gray-300 h-px w-full"/>
                         <p className="text-gray-500 p-3">OR</p>
@@ -141,10 +127,12 @@ const SignUp = () => {
                         onChange={(e) => setPassword(e.target.value)}
                     />
                     <div className="w-full p-4">
-                        <button onClick={handleClick}
-                                disabled={isSubmitDisabled} // Disable the button when required fields are empty
-                                className={`w-full bg-blue-500 text-white font-semibold rounded-md px-10 py-2 shadow-md hover:bg-blue-400 transition duration-400 ease-in-out ${isSubmitDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
-                            Sign up
+                        <button
+                            onClick={handleClick}
+                            disabled={isSubmitDisabled || loading}
+                            className={`w-full bg-blue-500 text-white font-semibold rounded-md px-10 py-2 shadow-md hover:bg-blue-400 transition duration-400 ease-in-out ${isSubmitDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                        >
+                            {loading ? "Signing Up..." : "Sign up"}
                         </button>
                     </div>
                     <div>

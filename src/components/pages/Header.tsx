@@ -1,13 +1,23 @@
-import React, { useEffect } from "react";
+import React, {useEffect, useState} from "react";
 import { ReactComponent as OwoSVG } from "../images/Owl.svg";
 import "../../index.css";
 import { UserAuth } from "../../context/UserAuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import axios from "../server/Axios";
+import axios from "../server/axios";
+
+interface UserProfile {
+    id: number;
+    authUserId: number;
+    name: string;
+    surname: string;
+    email: string;
+}
+
 
 const Header = () => {
-    const { logOut, setIsAuth, isAuth, profileData, setProfileData, user } = UserAuth();
+    const { logOut, setIsAuth, isAuth, profileData, setProfileData, user, setAsa, asa } = UserAuth();
+
     const auth = getAuth();
     const navigate = useNavigate();
 
@@ -40,6 +50,16 @@ const Header = () => {
 
                     if (response.status === 200) {
                         const data = response.data;
+                        const profileDataWithId: UserProfile = {
+                            id: data.id,
+                            authUserId: data.authUserId,
+                            name: data.name,
+                            surname: data.surname,
+                            email: data.email,
+                        };
+
+                        console.log(profileDataWithId)
+
                         setProfileData(data);
                         console.log("Profile Data:", data);
                     } else {
@@ -52,16 +72,23 @@ const Header = () => {
                 console.log("User is signed out.");
             }
         });
-    }, [auth]);
+    }, [auth, isAuth, profileData, setProfileData, setAsa]);
 
-    console.log(profileData)
+    console.log(profileData);
+    console.log(asa)
 
     return (
         <div className="flex w-full border-b-2 border-black items-center h-70">
-            <Link to="/profile">
-                <OwoSVG className="h-12 w-24" />{" "}
-            </Link>
-            <Link to="/profile" className="text-lg font-brush-script text-slate-100">
+            {isAuth ? (
+                <Link to="/profile">
+                    <OwoSVG className="h-12 w-24" />
+                </Link>
+            ) : (
+                <Link to="/signUp">
+                    <OwoSVG className="h-12 w-24" />
+                </Link>
+            )}
+            <Link to={isAuth ? "/profile" : "/signUp"} className="text-lg font-brush-script text-slate-100">
                 WebLab
             </Link>
             <div className="flex justify-center w-full">

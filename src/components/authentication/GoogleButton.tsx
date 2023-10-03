@@ -1,19 +1,27 @@
-import React from "react";
+import React, {useEffect} from "react";
 import { UserAuth } from "../../context/UserAuthContext";
+import {useNavigate} from "react-router-dom";
 
 const GoogleButton = () => {
-    const { googleSignIn, isAuth, setIsAuth } = UserAuth();
+    const { googleSignIn, isAuth, user, setIsAuth } = UserAuth();
+    const navigate = useNavigate()
 
     const handleGoogleSignIn = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        await googleSignIn();
         e.preventDefault();
         try {
-            await googleSignIn();
             setIsAuth(true)
             console.log(isAuth)
         } catch (error) {
             console.error(error);
         }
     };
+
+    useEffect(() => {
+        if (user !== null) {
+            navigate("/profile")
+        }
+    }, [navigate, user])
 
     return (
         <div className="p-5">

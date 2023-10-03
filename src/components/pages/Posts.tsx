@@ -1,20 +1,29 @@
 import React, {useEffect, useState} from "react";
 import {getDownloadURL, ref, uploadBytes,} from "firebase/storage";
 import {onAuthStateChanged} from 'firebase/auth';
-import {auth, storage} from "../../firebase/Firebase";
+import {auth, storage} from "../../firebase/firebase";
 import {useNavigate} from "react-router-dom";
 import Header from "./Header";
 import firebase from "firebase/compat";
-import axios from "../server/Axios";
+import axios from "../server/axios";
 import {UserAuth} from "../../context/UserAuthContext";
 
 interface Post {
-    id: string;
+    id: number;
     images: string[];
     postText: string;
     title: string;
+    profileId: number
     name: string;
     surname: string;
+    comment: Comment[];
+}
+
+interface Comment {
+    id: number;
+    text: string;
+    profileId: number;
+    postId: number;
 }
 
 interface UserData {
@@ -79,6 +88,7 @@ const Modal: React.FC = () => {
                         id: userData.profileData.id,
                         email: userData.profileData.email || "",
                         name: userData.profileData.name || "",
+                        profileId: userData.profileData.profileId || "",
                         surname: userData.profileData.surname || "",
                     });
                 }
@@ -99,14 +109,18 @@ const Modal: React.FC = () => {
             setLoadingUserPosts(true);
             try {
                 const response = await axios.get(`http://192.168.10.146:5000/api/post/${profileId}`);
+                console.log(response)
                 const postDataWithImages: Post[] = response.data.map((post: any) => ({
                     id: post.id,
-                    images: [post.image], // Assuming image is a string
+                    images: [post.image],
                     title: post.title,
                     postText: post.postText,
-                    name: post.name, // Add missing properties with default values or retrieve them from the response
-                    surname: post.surname, // Add missing properties with default values or retrieve them from the response
+                    profileId: post.profileId,
+                    name: post.name,
+                    surname: post.surname,
+                    comment: post.comment
                 }));
+
                 setPostData(postDataWithImages);
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -118,7 +132,6 @@ const Modal: React.FC = () => {
         getPost();
 
     }, [profileId]);
-
 
     const createPost = async () => {
         try {
@@ -136,13 +149,12 @@ const Modal: React.FC = () => {
                 };
 
                 // @ts-ignore
-                setPostData((prevPostData) => [newPost, ...prevPostData]);
+                setPostData((prevPostData) => [...prevPostData, newPost]);
+                // @ts-ignore
+                setPosts((prevPosts) => [...prevPosts, newPost]);
 
                 resetForm();
                 setShowModal(false);
-
-                // @ts-ignore
-                setPosts((prevPosts: Post[]) => [newPost, ...prevPosts]);
 
                 navigate("/posts");
             }
@@ -159,12 +171,12 @@ const Modal: React.FC = () => {
                 username: user.displayName || "",
                 password: "",
             };
-            console.log(userData)
             setUser(userData);
         } else {
-            setPosts([]);
+            setUser(null);
         }
     };
+
 
     useEffect(() => {
         // @ts-ignore
@@ -241,7 +253,6 @@ const Modal: React.FC = () => {
                 title: editingPost.title,
                 postText: editingPost.postText,
                 images: editingPost.images,
-                // Add other properties like name and surname if required
             });
 
             setPostData((prevPostData) =>
@@ -252,7 +263,6 @@ const Modal: React.FC = () => {
                             title: editingPost.title,
                             postText: editingPost.postText,
                             images: editingPost.images,
-                            // Add other properties like name and surname if required
                         }
                         : post
                 )
@@ -299,7 +309,7 @@ const Modal: React.FC = () => {
                     </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5">
-                    {postData && postData.length > 0 && (
+                    {
                         postData.map((post, index) => (
                             <div
                                 key={index}
@@ -314,10 +324,25 @@ const Modal: React.FC = () => {
                                             className="w-full h-80 rounded-tl-2xl rounded-tr-2xl"
                                         />
                                     )}
+
                                     <p className="text-xl font-semibold p-3">{post.title}</p>
-                                    <div className="text-center p-5 text-gray-600 overflow-hidden">
+                                    <div className="text-center p-5 text-gray-600 overflow-hidden rounded-sm resize-none rounded-md overflow-wrap break-word truncate-3-lines">
                                         {post.postText}
                                     </div>
+                                    <>
+                                        <div className="mt-4">
+                                            {post.comment && post.comment.length > 0 && (
+                                                <div className="text-left text-gray-600 mb-2 bg-slate-100 p-2">
+                                                    <h3 className="font-semibold text-xl mb-2">Comments:</h3>
+                                                    {post.comment.map((comment, index) => (
+                                                        <div key={index} style={{ backgroundColor: '#your-color-code' }} className="mb-2">
+                                                            {comment.text}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
                                 </div>
                                 <div className="bg-gray-300 h-px w-full mt-4" />
                                 <div className="mt-4 relative bottom-2 left-2">
@@ -335,7 +360,7 @@ const Modal: React.FC = () => {
                                     </button>
                                 </div>
                             </div>
-                        ))
+                        )
                     )}
                 </div>
             </div>

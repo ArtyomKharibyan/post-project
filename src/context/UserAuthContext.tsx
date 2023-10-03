@@ -9,7 +9,7 @@ import {
     GoogleAuthProvider,
     signInWithPopup
 } from "firebase/auth";
-import { auth } from "../firebase/Firebase";
+import { auth } from "../firebase/firebase";
 
 interface UserAuthContextProviderProps {
     children: ReactNode;
@@ -29,6 +29,8 @@ interface UserAuthContextValue {
     setProfileData: Dispatch<SetStateAction<UserProfile | null>>;
     profileId : number | undefined
     setProfileId: Dispatch<SetStateAction<number | undefined>>;
+    setAsa: Dispatch<SetStateAction<UserProfile | null>>;
+    asa: UserProfile | null;
 }
 
 export const UserContext = createContext<UserAuthContextValue | undefined>(
@@ -38,12 +40,14 @@ export const UserContext = createContext<UserAuthContextValue | undefined>(
 interface UserProfile {
     id: number
     email: string;
+    profileId: number;
     name: string;
     surname: string;
 }
 
 export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
+    const [asa, setAsa] = useState<UserProfile | null>(null);
     const [selectedPost, setSelectedPost] = useState<string | null>(null);
     const [isAuth, setIsAuth] = useState(localStorage.getItem("isAuth") === "true");
     const [profileData, setProfileData] = useState<UserProfile | null>(null);
@@ -88,6 +92,14 @@ export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = (
         }
     }, [user]);
 
+    useEffect(() => {
+        if (profileData) {
+            setProfileId(profileData.id);
+        } else {
+            setProfileId(undefined);
+        }
+    }, [profileData]);
+
     const contextValue: UserAuthContextValue = {
         createUser,
         logOut,
@@ -101,7 +113,9 @@ export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = (
         profileData,
         setProfileData,
         profileId,
-        setProfileId
+        setProfileId,
+        setAsa,
+        asa
     };
 
     return (

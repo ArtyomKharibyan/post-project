@@ -1,16 +1,18 @@
-import React, { useEffect, useState } from "react";
-import axios from "../server/Axios";
+import React, {useEffect, useState } from "react";
+import axios from "../server/axios";
 import Header from "./Header";
 import { UserAuth } from "../../context/UserAuthContext";
 import { AiFillDelete, AiOutlineEdit } from "react-icons/ai";
 
 interface Post {
+    name: string;
+    surname: string;
     id: string;
     title: string;
     postText: string;
-    image: string[];
+    profileId: number;
+    image: string;
     comments: Comment[];
-    authorId: string;
 }
 
 interface Comment {
@@ -21,13 +23,13 @@ interface Comment {
 const Feed = () => {
     const [postList, setPostList] = useState<Post[]>([]);
     const [editedTitle, setEditedTitle] = useState<string>("");
+    const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
     const [editedContent, setEditedContent] = useState<string>("");
     const [editPostId, setEditPostId] = useState<string | null>(null);
     const [commentTexts, setCommentTexts] = useState<{ [postId: string]: string }>({});
-    const { isAuth, profileData, setProfileData } = UserAuth();
+    const { isAuth, profileData, setProfileData, asa } = UserAuth();
     const profileId = profileData?.id ?? "";
-    const profileIdString = profileId?.toString() ?? "";
-
+    const test = asa?.id ?? "";
 
     useEffect(() => {
         const getPosts = async () => {
@@ -38,10 +40,15 @@ const Feed = () => {
                     return {
                         ...post,
                         comments: comments,
+                        authorName: post.name,
+                        authorSurname: post.surname,
                     };
                 })) as Post[];
+
                 setPostList(posts);
-                setProfileData(profileData);
+
+                const userData = response.data.userData;
+                setProfileData(userData);
             } catch (error) {
                 console.error("Error fetching posts:", error);
             }
@@ -61,7 +68,17 @@ const Feed = () => {
         };
 
         getPosts();
-    }, [setProfileData]);
+    }, []);
+
+    if (profileId === undefined || test === undefined) {
+        return <div>Loading...</div>;
+    }
+
+
+    console.log(asa, "AAAAAAAAAAAAAAAAAAAAA")
+    console.log(profileId, 289428301941)
+    console.log(test, 53489204892049)
+    console.log(profileData, 289428301941)
 
     const handleDeletePost = async (postId: string) => {
         try {
@@ -73,13 +90,14 @@ const Feed = () => {
     };
 
     const handleEditPost = (postId: string) => {
-        const postToEdit = postList.find((post) => post.id === postId);
-        if (postToEdit && postToEdit.authorId === profileIdString) {
-            setEditedTitle(postToEdit.title);
-            setEditedContent(postToEdit.postText);
-            setEditPostId(postId);
-        }
+            const postToEdit = postList.find((post) => post.id === postId);
+            if (postToEdit) {
+                setEditedTitle(postToEdit.title);
+                setEditedContent(postToEdit.postText);
+                setEditPostId(postId);
+            }
     };
+
 
     const handleSaveEdit = async () => {
         if (!editPostId || !editedTitle || !editedContent) return;
@@ -111,70 +129,109 @@ const Feed = () => {
     };
 
     const handleCommentSubmit = async (postId: string) => {
+        setIsCommentSubmitting(true);
         try {
-            await axios.post(`http://192.168.10.146:5000/api/comment`, {
+            const newComment: Comment = {
                 text: commentTexts[postId] || "",
+                id: ""
+            };
+
+            setPostList((prevPostList) =>
+                prevPostList.map((post) =>
+                    post.id === postId ? { ...post, comments: [...post.comments, newComment] } : post
+                )
+            );
+
+            const response = await axios.post(`http://192.168.10.146:5000/api/comment`, {
+                text: newComment.text,
                 profileId: profileId,
                 postId: postId,
             });
+
+            if (response.data.id) {
+                setPostList((prevPostList) =>
+                    prevPostList.map((post) =>
+                        post.id === postId
+                            ? { ...post, comments: [...post.comments, response.data] }
+                            : post
+                    )
+                );
+            }
+
             setCommentTexts((prevCommentTexts) => ({
                 ...prevCommentTexts,
                 [postId]: "",
             }));
         } catch (error) {
             console.error("Error submitting comment:", error);
+
+        } finally {
+            setIsCommentSubmitting(false);
         }
     };
 
-    console.log(profileId)
-    console.log(postList)
+
+    console.log(commentTexts)
+
+    console.log(postList, 1232321)
+    console.log(editPostId)
+    console.log(profileId, 323131212)
 
     return (
         <div>
             <Header />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
-                {postList.map((post) => (
+                {postList
+                    .filter((post) => post.profileId !== profileId) // Filter posts based on profileId
+                    .map((post) => (
                     <div className="p-4 rounded-2xl bg-slate-200" key={post.id}>
                         <div className="min-w-2xl">
-                            {post.image && <img className="w-full h-96 mb-2" src={post.image[0]} alt="" />}
-                            {editPostId === post.id ? (
-                                <>
-                                    <input
-                                        className="w-full mb-2 p-1 rounded-md border border-silver-300"
-                                        type="text"
-                                        placeholder="Enter your edited title"
-                                        value={editedTitle}
-                                        onChange={(e) => setEditedTitle(e.target.value)}
-                                    />
-                                    <textarea
-                                        className="w-full mb-2 p-1 rounded-md border border-silver-300"
-                                        placeholder="Enter your edited content"
-                                        value={editedContent}
-                                        onChange={(e) => setEditedContent(e.target.value)}
-                                    />
-                                    <button className="bg-blue-500 text-white w-60 p-2" onClick={handleSaveEdit}>
-                                        Save Changes
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <p className="text-xl font-semibold p-3" onClick={() => handleEditPost(post.id)}>
-                                        {post.title}
-                                    </p>
-                                    <div className="text-center p-5 text-gray-600 overflow-hidden">{post.postText}</div>
-                                    {isAuth && post.authorId === profileIdString && (
-                                        <div className="text-center">
-                                            <button onClick={() => handleEditPost(post.id)}>
-                                                <AiOutlineEdit className="h-7 w-7 mr-2" />
-                                            </button>
-                                            <button onClick={() => handleDeletePost(post.id)}>
-                                                <AiFillDelete style={{ color: "red" }} className="bg-red h-7 w-7" />
-                                            </button>
-                                        </div>
-                                    )}
-                                </>
+                            {post.image && (
+                                <img
+                                    src={post.image}
+                                    alt=""
+                                    className="w-full h-80 rounded-tl-2xl rounded-tr-2xl"
+                                />
                             )}
                         </div>
+                        {editPostId === post.id ? (
+                            <>
+                                <input
+                                    className="w-full mb-2 p-1 rounded-md border border-silver-300"
+                                    type="text"
+                                    placeholder="Enter your edited title"
+                                    value={editedTitle}
+                                    onChange={(e) => setEditedTitle(e.target.value)}
+                                />
+                                <textarea
+                                    className="w-full mb-2 p-1 rounded-md border border-silver-300 resize-none"
+                                    placeholder="Enter your edited content"
+                                    value={editedContent}
+                                    onChange={(e) => setEditedContent(e.target.value)}
+                                />
+                                <button className="bg-blue-500 text-white w-60 p-2" onClick={handleSaveEdit}>
+                                    Save Changes
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-xl font-semibold p-3">
+                                    {post.title}
+                                </p>
+                                <div className="text-center p-5 text-gray-600 overflow-hidden">{post.postText}</div>
+                            </>
+                        )}
+                        {isAuth && profileId === post.profileId && (
+                            <>
+                                <button onClick={() => handleEditPost(post.id)}>
+                                    <AiOutlineEdit className="h-7 w-7 mr-2" />
+                                </button>
+                                <button onClick={() => handleDeletePost(post.id)}>
+                                    <AiFillDelete style={{ color: "red" }} className="bg-red h-7 w-7" />
+                                </button>
+                            </>
+                        )}
+
                         {isAuth && (
                             <div className="mt-4 relative bottom-2 left-2">
                                 <div className="flex p-1 mb-2">
@@ -185,22 +242,31 @@ const Feed = () => {
                                         value={commentTexts[post.id] || ""}
                                         onChange={handleCommentChange(post.id)}
                                     />
-                                    <button
-                                        className="bg-blue-500 text-white w-60 p-2"
-                                        onClick={() => handleCommentSubmit(post.id)}
-                                    >
-                                        Submit Comment
-                                    </button>
+                                    {isCommentSubmitting ? (
+                                        <div>Loading...</div>
+                                    ) : (
+                                        <button
+                                            className="bg-blue-500 text-white w-60 p-2"
+                                            onClick={() => handleCommentSubmit(post.id)}
+                                            disabled={!commentTexts[post.id]?.trim()}
+                                        >
+                                            Submit Comment
+                                        </button>
+                                    )}
+
                                 </div>
                                 <div className="text-gray-600 mt-4">
-                                    {post.comments.map((comment) => (
-                                        <div key={comment.id} className="mb-2">
+                                    {post.comments.map((comment, index) => (
+                                        <div key={index} className="mb-2 bg-slate-100 p-2">
                                             {comment.text}
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         )}
+                        <div className="font-semibold">
+                            Author: {post.name} {post.surname }
+                        </div>
                     </div>
                 ))}
             </div>
