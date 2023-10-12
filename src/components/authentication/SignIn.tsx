@@ -3,6 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { UserAuth } from "../../context/UserAuthContext";
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
+import {Api_Url} from "../server/config";
+import axios from '../server/axios';
+import {UserCredential} from "firebase/auth";
 
 const SignIn = () => {
     const [email, setEmail] = useState<string>("");
@@ -24,12 +27,53 @@ const SignIn = () => {
     const handleGoogleSignIn = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault();
         try {
-            await googleSignIn();
-        } catch (error: any) {
+            // @ts-ignore
+            const userCredential: UserCredential = await googleSignIn();
+
+            if (userCredential && userCredential.user) {
+                const idToken = await storeTokenInLocalStorage(userCredential);
+                console.log(idToken)
+                const fullName = userCredential.user.displayName ?? "";
+                let name = "";
+                let surname = "";
+                const wordsArray = fullName.split(" ");
+
+                if (wordsArray.length >= 2) {
+                    name = wordsArray[0];
+                    surname = wordsArray.slice(1).join(" ");
+                } else if (wordsArray.length === 1) {
+                    name = wordsArray[0];
+                    surname = "";
+                }
+
+                const email = userCredential.user.email;
+                const userData = {
+                    name: name,
+                    surname: surname,
+                    email: email,
+                };
+
+                await axios.post(`${Api_Url}/profile`, userData);
+                navigate("/profile");
+            } else {
+                throw new Error("Google sign-in failed.");
+            }
+        } catch (error) {
             console.error(error);
         }
     };
 
+    const storeTokenInLocalStorage = async (userCredential: UserCredential) => {
+        try {
+            const idToken = await userCredential.user.getIdToken(true);
+            localStorage.setItem("token", idToken);
+            return idToken
+        } catch (error) {
+            console.error('Error storing token in localStorage:', error);
+        }
+    };
+
+    console.log("Im rendered aaaaaaaaaaaaaaaaaaaaaaa")
 
     useEffect(() => {
         const checkUser = (user: firebase.User | null) => {
@@ -73,7 +117,7 @@ const SignIn = () => {
             <div className="w-96 h-600 p-5 relative border-2 border-right/50 text-center rounded-xl block bg-slate-100">
                 <p className="font-brush-script text-4xl p-5">WebLab</p>
                 <div className="grid grid-rows-[60px]">
-                     <p className = "text-red-700">{error}</p>
+                    <p className = "text-red-700">{error}</p>
                     <input
                         className="w-full px-5 py-3 my-2 border-box"
                         type="email"
@@ -88,7 +132,7 @@ const SignIn = () => {
                     />
                     <div className="w-full p-5">
                         <button onClick={handleClick}
-                                disabled={isSubmitDisabled} // Disable the button when required fields are empty
+                                disabled={isSubmitDisabled}
                                 className={`w-full bg-blue-500 text-white font-semibold rounded-md px-10 py-2 shadow-md hover:bg-blue-400 transition duration-400 ease-in-out ${isSubmitDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
                             Sign in
                         </button>

@@ -1,13 +1,13 @@
 import React from 'react';
 
 import './App.css';
-import Header from "./components/pages/Header";
+import Profile from "./components/pages/Profile";
 
 function App() {
 
     return (
         <div className="h-800">
-            <Header/>
+            <Profile/>
         </div>
     );
 }

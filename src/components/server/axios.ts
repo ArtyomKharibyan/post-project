@@ -1,18 +1,12 @@
 import axios from 'axios';
 
+const baseURL = process.env.REACT_APP_BASE_URL;
+
 const instance = axios.create({
-    baseURL: 'http://192.168.10.81:5000',
+    baseURL: baseURL,
     headers: {
         'Content-Type': 'application/json; charset=utf-8',
     },
-});
-instance.interceptors.request.use((config) => {
-    const token = localStorage.token;
-    console.log(token, 45)
-    if (config.headers) {
-        config.headers.Authorization = `Bearer ${token}` || '';
-    }
-    return config;
 });
 
 

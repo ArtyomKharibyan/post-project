@@ -6,6 +6,7 @@ import { updateProfile, UserCredential} from "firebase/auth";
 import {collection, doc, setDoc} from "firebase/firestore";
 import GoogleButton from "./GoogleButton"
 import {db} from "../../firebase/firebase";
+import {Api_Url} from "../server/config";
 
 const SignUp = () => {
     const [loading, setLoading] = useState(false);
@@ -24,7 +25,7 @@ const SignUp = () => {
 
     const fetchUserProfile = async () => {
         try {
-            const response = await axios.post("http://192.168.10.146:5000/api/profile", {
+            const response = await axios.post(`${Api_Url}/profile`, {
                 name,
                 surname,
                 email
@@ -48,6 +49,7 @@ const SignUp = () => {
         try {
             const idToken = await userCredential.user.getIdToken(true);
             localStorage.setItem("token", idToken);
+            return idToken
         } catch (error) {
             console.error('Error storing token in localStorage:', error);
         }
@@ -70,9 +72,10 @@ const SignUp = () => {
                 const userDocRef = doc(usersCollectionRef, user.uid);
                 await setDoc(userDocRef, { name, surname });
 
-                await storeTokenInLocalStorage(userCredential);
+                const IdToken = await storeTokenInLocalStorage(userCredential);
 
-                await fetchUserProfile();
+                // @ts-ignore
+                await fetchUserProfile(IdToken);
 
                 navigate('/profile');
             } else {

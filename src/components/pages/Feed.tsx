@@ -1,8 +1,9 @@
-import React, {useEffect, useState } from "react";
+import React, {useEffect, useState, useCallback } from "react";
 import axios from "../server/axios";
 import Header from "./Header";
 import { UserAuth } from "../../context/UserAuthContext";
 import { AiFillDelete, AiOutlineEdit } from "react-icons/ai";
+import {Api_Url} from "../server/config";
 
 interface Post {
     name: string;
@@ -11,78 +12,114 @@ interface Post {
     title: string;
     postText: string;
     profileId: number;
-    image: string;
+    imageUrl: string;
+    fullName: string;
     comments: Comment[];
+    loading: boolean;
 }
 
 interface Comment {
     id: string;
     text: string;
+    userName: string;
+    userSurname: string;
 }
 
-const Feed = () => {
+const Feed: React.FC = () => {
     const [postList, setPostList] = useState<Post[]>([]);
     const [editedTitle, setEditedTitle] = useState<string>("");
-    const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
     const [editedContent, setEditedContent] = useState<string>("");
-    const [editPostId, setEditPostId] = useState<string | null>(null);
     const [commentTexts, setCommentTexts] = useState<{ [postId: string]: string }>({});
-    const { isAuth, profileData, setProfileData, asa } = UserAuth();
-    const profileId = profileData?.id ?? "";
-    const test = asa?.id ?? "";
+    const [visibleCommentsCounts, setVisibleCommentsCounts] = useState<{ [postId: string]: number }>({});
+    const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
+    const [editPostId, setEditPostId] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const { isAuth, profileData } = UserAuth();
+    const profileId = profileData?.id || "";
+
+    const initialCommentsCount = 3;
+    const loadMoreCommentsCount = 3;
 
     useEffect(() => {
         const getPosts = async () => {
             try {
-                const response = await axios.get("http://192.168.10.146:5000/api/post");
-                const posts = await Promise.all(response.data.map(async (post: any) => {
-                    const comments = await getCommentsForPost(post.id);
-                    return {
+                const response = await axios.get(`${Api_Url}/feed?page=1`);
+                if (Array.isArray(response.data)) {
+                    const posts = response.data.map((post: any) => ({
                         ...post,
-                        comments: comments,
-                        authorName: post.name,
-                        authorSurname: post.surname,
-                    };
-                })) as Post[];
+                        comments: post.comment || [],
+                    })) as Post[];
 
-                setPostList(posts);
-
-                const userData = response.data.userData;
-                setProfileData(userData);
+                    setPostList(posts);
+                    const initialVisibleCommentsCounts: { [postId: string]: number } = {};
+                    posts.forEach((post) => {
+                        initialVisibleCommentsCounts[post.id] = initialCommentsCount;
+                    });
+                    setVisibleCommentsCounts(initialVisibleCommentsCounts);
+                } else {
+                    console.error("Invalid or empty response data");
+                    setPostList([]);
+                }
             } catch (error) {
                 console.error("Error fetching posts:", error);
-            }
-        };
-
-        const getCommentsForPost = async (postId: string) => {
-            try {
-                const response = await axios.get(`http://192.168.10.146:5000/api/comment/${postId}`);
-                return response.data.map((comment: any) => ({
-                    id: comment.id,
-                    text: comment.text,
-                })) as Comment[];
-            } catch (error) {
-                console.error("Error fetching comments:", error);
-                return [];
             }
         };
 
         getPosts();
     }, []);
 
-    if (profileId === undefined || test === undefined) {
-        return <div>Loading...</div>;
-    }
+    useEffect(() => {
+        const handleScroll = () => {
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
 
+            if (windowHeight + scrollTop >= documentHeight - 200) {
+                loadMorePosts();
+            }
+        };
 
-    console.log(asa, "AAAAAAAAAAAAAAAAAAAAA")
-    console.log(profileId, 289428301941)
-    console.log(test, 53489204892049)
-    console.log(profileData, 289428301941)
+        window.addEventListener("scroll", handleScroll);
+
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+        };
+    }, [isLoading, currentPage]);
+
+    const loadMorePosts = async () => {
+        if (isLoading) return;
+        setIsLoading(true);
+        try {
+            const response = await axios.get(`${Api_Url}/feed?page=${currentPage + 1}`);
+            if (Array.isArray(response.data)) {
+                const newPosts = response.data.map((post: any) => ({
+                    ...post,
+                    comments: post.comment || [],
+                })) as Post[];
+                setPostList((prevPostList) => [...prevPostList, ...newPosts]);
+
+                setVisibleCommentsCounts((prevVisibleCommentsCounts) => {
+                    const updatedCounts = { ...prevVisibleCommentsCounts };
+                    newPosts.forEach((post) => {
+                        updatedCounts[post.id] = initialCommentsCount;
+                    });
+                    return updatedCounts;
+                });
+
+                setCurrentPage(currentPage + 1);
+            }
+        } catch (error) {
+            console.error("Error fetching more posts:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
 
     const handleDeletePost = async (postId: string) => {
         try {
-            await axios.delete(`http://192.168.10.146:5000/api/post/${postId}`);
+            await axios.delete(`${Api_Url}/post/${postId}`);
             setPostList((prevPostData) => prevPostData.filter((post) => post.id !== postId));
         } catch (error) {
             console.error("Error deleting post: ", error);
@@ -90,19 +127,18 @@ const Feed = () => {
     };
 
     const handleEditPost = (postId: string) => {
-            const postToEdit = postList.find((post) => post.id === postId);
-            if (postToEdit) {
-                setEditedTitle(postToEdit.title);
-                setEditedContent(postToEdit.postText);
-                setEditPostId(postId);
-            }
+        const postToEdit = postList.find((post) => post.id === postId);
+        if (postToEdit) {
+            setEditedTitle(postToEdit.title);
+            setEditedContent(postToEdit.postText);
+            setEditPostId(postId);
+        }
     };
-
 
     const handleSaveEdit = async () => {
         if (!editPostId || !editedTitle || !editedContent) return;
         try {
-            await axios.patch(`http://192.168.10.146:5000/api/post/${editPostId}`, {
+            await axios.patch(`${Api_Url}/post/${editPostId}`, {
                 title: editedTitle,
                 postText: editedContent,
             });
@@ -119,21 +155,27 @@ const Feed = () => {
         }
     };
 
-    const handleCommentChange = (postId: string) => {
-        return (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleCommentChange = useCallback(
+        (postId: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
             setCommentTexts((prevCommentTexts) => ({
                 ...prevCommentTexts,
                 [postId]: e.target.value,
             }));
-        };
-    };
+        },
+        []
+    );
 
     const handleCommentSubmit = async (postId: string) => {
         setIsCommentSubmitting(true);
         try {
+            const currentUserName = profileData?.name || "";
+            const currentUserSurname = profileData?.surname || "";
+
             const newComment: Comment = {
                 text: commentTexts[postId] || "",
-                id: ""
+                id: "",
+                userName: currentUserName,
+                userSurname: currentUserSurname,
             };
 
             setPostList((prevPostList) =>
@@ -142,18 +184,23 @@ const Feed = () => {
                 )
             );
 
-            const response = await axios.post(`http://192.168.10.146:5000/api/comment`, {
+            setVisibleCommentsCounts((prevVisibleCommentsCounts) => ({
+                ...prevVisibleCommentsCounts,
+                [postId]: (prevVisibleCommentsCounts[postId] || 0) + 1, // Increment the count to show newly added comment
+            }));
+
+            const response = await axios.post(`${Api_Url}/comment`, {
                 text: newComment.text,
                 profileId: profileId,
                 postId: postId,
+                userName: newComment.userName,
+                userSurname: newComment.userSurname,
             });
 
             if (response.data.id) {
                 setPostList((prevPostList) =>
                     prevPostList.map((post) =>
-                        post.id === postId
-                            ? { ...post, comments: [...post.comments, response.data] }
-                            : post
+                        post.id === postId ? { ...post, comments: [...post.comments, response.data] } : post
                     )
                 );
             }
@@ -164,111 +211,116 @@ const Feed = () => {
             }));
         } catch (error) {
             console.error("Error submitting comment:", error);
-
         } finally {
             setIsCommentSubmitting(false);
         }
     };
-
-
-    console.log(commentTexts)
-
-    console.log(postList, 1232321)
-    console.log(editPostId)
-    console.log(profileId, 323131212)
 
     return (
         <div>
             <Header />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
                 {postList
-                    .filter((post) => post.profileId !== profileId) // Filter posts based on profileId
                     .map((post) => (
-                    <div className="p-4 rounded-2xl bg-slate-200" key={post.id}>
-                        <div className="min-w-2xl">
-                            {post.image && (
-                                <img
-                                    src={post.image}
-                                    alt=""
-                                    className="w-full h-80 rounded-tl-2xl rounded-tr-2xl"
-                                />
-                            )}
-                        </div>
-                        {editPostId === post.id ? (
-                            <>
-                                <input
-                                    className="w-full mb-2 p-1 rounded-md border border-silver-300"
-                                    type="text"
-                                    placeholder="Enter your edited title"
-                                    value={editedTitle}
-                                    onChange={(e) => setEditedTitle(e.target.value)}
-                                />
-                                <textarea
-                                    className="w-full mb-2 p-1 rounded-md border border-silver-300 resize-none"
-                                    placeholder="Enter your edited content"
-                                    value={editedContent}
-                                    onChange={(e) => setEditedContent(e.target.value)}
-                                />
-                                <button className="bg-blue-500 text-white w-60 p-2" onClick={handleSaveEdit}>
-                                    Save Changes
-                                </button>
-                            </>
-                        ) : (
-                            <>
-                                <p className="text-xl font-semibold p-3">
-                                    {post.title}
-                                </p>
-                                <div className="text-center p-5 text-gray-600 overflow-hidden">{post.postText}</div>
-                            </>
-                        )}
-                        {isAuth && profileId === post.profileId && (
-                            <>
-                                <button onClick={() => handleEditPost(post.id)}>
-                                    <AiOutlineEdit className="h-7 w-7 mr-2" />
-                                </button>
-                                <button onClick={() => handleDeletePost(post.id)}>
-                                    <AiFillDelete style={{ color: "red" }} className="bg-red h-7 w-7" />
-                                </button>
-                            </>
-                        )}
-
-                        {isAuth && (
-                            <div className="mt-4 relative bottom-2 left-2">
-                                <div className="flex p-1 mb-2">
-                                    <input
-                                        className="w-full relative right-2 rounded-md border border-silver-300 p-1"
-                                        type="text"
-                                        placeholder="Enter your comment"
-                                        value={commentTexts[post.id] || ""}
-                                        onChange={handleCommentChange(post.id)}
+                        <div className="p-3 rounded-2xl bg-purple-200 border border-black" key={post.id}>
+                            <div>
+                                {post.imageUrl && (
+                                    <img
+                                        src={post.imageUrl}
+                                        alt=""
+                                        className="w-full h-96 object-cover"
                                     />
-                                    {isCommentSubmitting ? (
-                                        <div>Loading...</div>
-                                    ) : (
-                                        <button
-                                            className="bg-blue-500 text-white w-60 p-2"
-                                            onClick={() => handleCommentSubmit(post.id)}
-                                            disabled={!commentTexts[post.id]?.trim()}
-                                        >
-                                            Submit Comment
-                                        </button>
-                                    )}
-
-                                </div>
-                                <div className="text-gray-600 mt-4">
-                                    {post.comments.map((comment, index) => (
-                                        <div key={index} className="mb-2 bg-slate-100 p-2">
-                                            {comment.text}
-                                        </div>
-                                    ))}
-                                </div>
+                                )}
                             </div>
-                        )}
-                        <div className="font-semibold">
-                            Author: {post.name} {post.surname }
+                            {editPostId === post.id ? (
+                                <>
+                                    <input
+                                        className="w-full mb-2 p-1 rounded-md border border-silver-300"
+                                        type="text"
+                                        placeholder="Enter your edited title"
+                                        value={editedTitle}
+                                        onChange={(e) => setEditedTitle(e.target.value)}
+                                    />
+                                    <textarea
+                                        className="w-full mb-2 p-1 rounded-md border border-silver-300 resize-none"
+                                        placeholder="Enter your edited content"
+                                        value={editedContent}
+                                        onChange={(e) => setEditedContent(e.target.value)}
+                                    />
+                                    <button className="bg-blue-500 text-white w-60 p-2" onClick={handleSaveEdit}>
+                                        Save Changes
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <p className="text-xl font-semibold p-3">
+                                        {post.title}
+                                    </p>
+                                    <div className="text-center p-5 text-gray-600 overflow-hidden">{post.postText}</div>
+                                </>
+                            )}
+                            {isAuth && profileId === post.profileId && (
+                                <>
+                                    <button onClick={() => handleEditPost(post.id)}>
+                                        <AiOutlineEdit className="h-7 w-7 mr-2" />
+                                    </button>
+                                    <button onClick={() => handleDeletePost(post.id)}>
+                                        <AiFillDelete style={{ color: "red" }} className="bg-red h-7 w-7" />
+                                    </button>
+                                </>
+                            )}
+
+                            {isAuth && (
+                                <div className="mt-4 relative bottom-2 left-2">
+                                    <div className="flex p-1 mb-2">
+                                        <input
+                                            className="w-full relative right-2 rounded-md border border-silver-300 p-1"
+                                            type="text"
+                                            placeholder="Enter your comment"
+                                            value={commentTexts[post.id] || ""}
+                                            onChange={handleCommentChange(post.id)}
+                                        />
+                                        {isCommentSubmitting ? (
+                                            <div>Loading...</div>
+                                        ) : (
+                                            <button
+                                                className={`bg-blue-500 text-white w-60 p-2 ${!commentTexts[post.id]?.trim() ? 'opacity-60' : ''}`}
+                                                onClick={() => handleCommentSubmit(post.id)}
+                                                disabled={!commentTexts[post.id]?.trim()}
+                                            >
+                                                Submit Comment
+                                            </button>
+                                        )}
+
+                                    </div>
+                                    <div className="text-gray-600 mt-4">
+                                        {post.comments.slice(0, visibleCommentsCounts[post.id] || initialCommentsCount).map((comment, index) => (
+                                            <div key={index} className="mb-2 bg-slate-100 relative right-2 rounded-2xl p-2">
+                                                <strong>User: {`${comment?.userName} ${comment?.userSurname}`}</strong> <br />
+                                                {comment.text}
+                                            </div>
+                                        ))}
+                                        {post.comments.length > initialCommentsCount && visibleCommentsCounts[post.id] < post.comments.length && (
+                                            <button
+                                                className="text-blue-700 cursor-pointer"
+                                                onClick={() => {
+                                                    setVisibleCommentsCounts((prevVisibleCommentsCounts) => ({
+                                                        ...prevVisibleCommentsCounts,
+                                                        [post.id]: prevVisibleCommentsCounts[post.id] + loadMoreCommentsCount,
+                                                    }));
+                                                }}
+                                            >
+                                                Show more comments
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            <div className="font-semibold">
+                                Author: {post.name} {post.surname}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
             </div>
         </div>
     );

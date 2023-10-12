@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useCallback, useRef} from "react";
 import {getDownloadURL, ref, uploadBytes,} from "firebase/storage";
 import {onAuthStateChanged} from 'firebase/auth';
 import {auth, storage} from "../../firebase/firebase";
@@ -7,16 +7,17 @@ import Header from "./Header";
 import firebase from "firebase/compat";
 import axios from "../server/axios";
 import {UserAuth} from "../../context/UserAuthContext";
+import {Api_Url} from "../server/config"
 
 interface Post {
     id: number;
-    images: string[];
+    imageUrl: string[];
     postText: string;
     title: string;
-    profileId: number
-    name: string;
-    surname: string;
-    comment: Comment[];
+    profileId?: number;
+    name?: string;
+    surname?: string;
+    comment?: Comment[];
 }
 
 interface Comment {
@@ -24,7 +25,10 @@ interface Comment {
     text: string;
     profileId: number;
     postId: number;
+    userName?: string;
+    userSurname?: string;
 }
+
 
 interface UserData {
     username: string;
@@ -37,18 +41,22 @@ const Modal: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
     const [title, setTitle] = useState<string>("");
     const [loading, setLoading] = useState(false);
+    const [loadingPosts, setLoadingPosts] = useState(true);
     const [postText, setPostText] = useState<string>("");
     const [imageUpload, setImageUpload] = useState<File | null>(null);
     const [user, setUser] = useState<UserData | null>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [postData, setPostData] = useState<Post[]>([]);
     const [loadingUserPosts, setLoadingUserPosts] = useState(false);
-
+    const [currentPage, setCurrentPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
     const [editingPost, setEditingPost] = useState<Post | null>(null);
     const [posts, setPosts] = useState<Post[]>([]);
+    const [loadedPostIds, setLoadedPostIds] = useState<Set<number>>(new Set());
 
     const {profileData, setProfileData} = UserAuth();
     const profileId = profileData?.id ?? "";
+    const observer = useRef<IntersectionObserver | null>(null);
 
     const navigate = useNavigate();
 
@@ -67,10 +75,10 @@ const Modal: React.FC = () => {
     const postToServer = async () => {
         try {
             const response = await axios.post(
-                "http://192.168.10.146:5000/api/post",
+                `${Api_Url}/post`,
                 {
                     title,
-                    image : imageUrl,
+                    imageUrl: imageUrl,
                     postText,
                     profileId: profileId,
                 }
@@ -104,24 +112,57 @@ const Modal: React.FC = () => {
         }
     };
 
+    const lastPostRef = useCallback(
+        (node: any) => {
+            if (loadingUserPosts) return;
+
+            if (observer.current) {
+                observer.current.disconnect();
+            }
+
+            observer.current = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && hasMore) {
+                    setCurrentPage((prevPage) => prevPage + 1);
+                }
+            });
+
+            if (node) {
+                observer.current.observe(node);
+            }
+        },
+        [loadingUserPosts, hasMore]
+    );
+
     useEffect(() => {
         const getPost = async () => {
             setLoadingUserPosts(true);
             try {
-                const response = await axios.get(`http://192.168.10.146:5000/api/post/${profileId}`);
-                console.log(response)
-                const postDataWithImages: Post[] = response.data.map((post: any) => ({
+                const response = await axios.get(`${Api_Url}/post/${profileId}?page=${currentPage}`);
+                const newPosts = response.data.map((post: any) => ({
                     id: post.id,
-                    images: [post.image],
+                    imageUrl: [post.imageUrl],
                     title: post.title,
                     postText: post.postText,
                     profileId: post.profileId,
                     name: post.name,
                     surname: post.surname,
-                    comment: post.comment
+                    comment: post.comment,
+                    userName: post.comment.userName,
+                    userSurname: post.comment.userSurname,
                 }));
 
-                setPostData(postDataWithImages);
+                // Filter out posts that are already loaded
+                const uniqueNewPosts = newPosts.filter((post: { id: number; }) => !loadedPostIds.has(post.id));
+
+                // Update loaded post IDs
+                setLoadedPostIds(prevIds => new Set([...prevIds, ...uniqueNewPosts.map((post: { id: number; }) => post.id)]));
+
+                // Append unique new posts to the state
+                setPostData(prevPosts => [...prevPosts, ...uniqueNewPosts]);
+
+                if (response.data.length === 0) {
+                    setHasMore(false);
+                }
             } catch (error) {
                 console.error('Error fetching data:', error);
             } finally {
@@ -130,28 +171,91 @@ const Modal: React.FC = () => {
         };
 
         getPost();
+    }, [profileId, currentPage]);
 
-    }, [profileId]);
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore) {
+                    setCurrentPage((prevPage) => prevPage + 1);
+                }
+            },
+            {
+                threshold: 0.1,
+            }
+        );
+
+        // @ts-ignore
+        if (lastPostRef.current) {
+            // @ts-ignore
+            observer.observe(lastPostRef.current);
+        }
+
+        return () => {
+            // @ts-ignore
+            if (lastPostRef.current) {
+                // @ts-ignore
+                observer.unobserve(lastPostRef.current);
+            }
+        };
+    }, [lastPostRef, hasMore]);
+
+
+    useEffect(() => {
+        const getPost = async () => {
+            setLoadingUserPosts(true);
+            try {
+                const response = await axios.get(`${Api_Url}/post/${profileId}?page=1`);
+                console.log(response)
+                const postDataWithImage: Post[] = response.data.map((post: any) => ({
+                    id: post.id,
+                    imageUrl: [post.imageUrl],
+                    title: post.title,
+                    postText: post.postText,
+                    profileId: post.profileId,
+                    name: post.name,
+                    surname: post.surname,
+                    comment: post.comment,
+                    userName: post.comment.userName,
+                    userSurname: post.comment.userSurname,
+                }));
+
+                setPostData(postDataWithImage);
+                setLoadingPosts(false);
+            } catch (error) {
+                setLoadingPosts(false);
+                console.error('Error fetching data:', error);
+            } finally {
+                setLoadingUserPosts(false);
+            }
+        };
+
+        const fetchData = async () => {
+            await getPost();
+        };
+
+        fetchData();
+
+    }, [profileId, profileData, setProfileData]);
 
     const createPost = async () => {
         try {
             setLoading(true);
 
-            await uploadFile();
+            await uploadFile()
+
             const response = await postToServer();
 
             if (response) {
                 const newPost = {
                     id: response.data.id,
-                    images: [imageUrl || ""],
+                    imageUrl: [imageUrl || ""],
                     title,
                     postText,
                 };
 
-                // @ts-ignore
-                setPostData((prevPostData) => [...prevPostData, newPost]);
-                // @ts-ignore
-                setPosts((prevPosts) => [...prevPosts, newPost]);
+                setPostData([...postData, newPost]);
+                setPosts([...posts, newPost]);
 
                 resetForm();
                 setShowModal(false);
@@ -165,18 +269,20 @@ const Modal: React.FC = () => {
         }
     };
 
+    console.log(user)
+    console.log(posts)
+
     const authStateChanged: AuthStateChangedCallback = (user) => {
         if (user) {
             const userData: UserData = {
                 username: user.displayName || "",
-                password: "",
+                password: ""
             };
             setUser(userData);
         } else {
             setUser(null);
         }
     };
-
 
     useEffect(() => {
         // @ts-ignore
@@ -186,27 +292,28 @@ const Modal: React.FC = () => {
         };
     }, []);
 
-
     const handleChooseFile = () => {
         if (fileInputRef.current) {
             fileInputRef.current.click();
         }
     };
 
-    const handleConfirmSelection = () => {
-        if (imageUpload) {
-            uploadFile();
-        }
-    };
-
     const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
-    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            setImageUrl(null);
-            setImageUpload(file);
-            setImageUrl(URL.createObjectURL(file));
+            try {
+                setLoading(true);
+                const imageRef = ref(storage, `images/${file.name}`);
+                await uploadBytes(imageRef, file);
+                const url = await getDownloadURL(imageRef);
+                setImageUrl(url);
+                setLoading(false);
+            } catch (error) {
+                console.error("Error uploading file:", error);
+                setLoading(false);
+            }
         }
     };
 
@@ -215,9 +322,9 @@ const Modal: React.FC = () => {
         setImageUrl(null);
     };
 
-    const handleDeletePost = async (postToDelete: Post) => {
+    const handleDeletePost = async (postToDelete: Post): Promise<void> => {
         try {
-            await axios.delete(`http://192.168.10.146:5000/api/post/${postToDelete.id}`);
+            await axios.delete(`${Api_Url}/post/${postToDelete.id}`);
             setPostData((prevPostData) =>
                 prevPostData.filter((post) => post.id !== postToDelete.id)
             );
@@ -229,7 +336,8 @@ const Modal: React.FC = () => {
         }
     };
 
-    const handleEditPost = (postToEdit: Post) => {
+
+    const handleEditPost = (postToEdit: Post): void => {
         setEditingPost(postToEdit);
     };
 
@@ -249,10 +357,9 @@ const Modal: React.FC = () => {
         if (!editingPost) return;
 
         try {
-            await axios.patch(`http://192.168.10.146:5000/api/post/${editingPost.id}`, {
+            await axios.patch(`${Api_Url}/post/${editingPost.id}`, {
                 title: editingPost.title,
                 postText: editingPost.postText,
-                images: editingPost.images,
             });
 
             setPostData((prevPostData) =>
@@ -262,7 +369,6 @@ const Modal: React.FC = () => {
                             ...post,
                             title: editingPost.title,
                             postText: editingPost.postText,
-                            images: editingPost.images,
                         }
                         : post
                 )
@@ -275,7 +381,7 @@ const Modal: React.FC = () => {
                             ...post,
                             title: editingPost.title,
                             postText: editingPost.postText,
-                            images: editingPost.images,
+                            imageUrl: editingPost.imageUrl,
                         }
                         : post
                 )
@@ -288,81 +394,86 @@ const Modal: React.FC = () => {
     };
 
     console.log(profileData)
-
-
-    useEffect(() => {
-        console.log(posts, 378193717319);
-    }, [posts]);
+    console.log(postData)
 
     return (
         <div>
             <Header/>
-            {loading && <div>Loading...</div>}
             <div>
-                <div className="flex justify-center items-center">
-                    <button
-                        className="bg-pink-500 text-white active:bg-pink-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150 h-full"
-                        type="button"
-                        onClick={() => openCreatePostModal()}
-                    >
-                        Open Create Post Modal
-                    </button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5">
+                {!loadingUserPosts && (
+                    <div className="flex justify-center items-center">
+                        <button
+                            className="bg-blue-500 text-white active:bg-blue-700 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150 h-full"
+                            type="button"
+                            onClick={() => openCreatePostModal()}
+                        >
+                            Create Post
+                        </button>
+                    </div>
+                )}
+                <div className="grid items-center justify-center grid-cols-1 md:grid-cols-1 gap-4 p-5 justify-items-center">
+                    <div className="grid grid-cols-1 gap-2 w-6/12 justify-items-center">
                     {
                         postData.map((post, index) => (
-                            <div
-                                key={index}
-                                className="border border-gray-300 border-none my-4 bg-slate-100 rounded-2xl"
-                            >
-                                {!loadingUserPosts && postData.length === 0 && <div>No posts available.</div>}
-                                <div className="min-w-2xl">
-                                    {post.images?.length > 0 && (
-                                        <img
-                                            src={post.images[0]}
-                                            alt=""
-                                            className="w-full h-80 rounded-tl-2xl rounded-tr-2xl"
-                                        />
-                                    )}
-
-                                    <p className="text-xl font-semibold p-3">{post.title}</p>
-                                    <div className="text-center p-5 text-gray-600 overflow-hidden rounded-sm resize-none rounded-md overflow-wrap break-word truncate-3-lines">
-                                        {post.postText}
-                                    </div>
-                                    <>
-                                        <div className="mt-4">
-                                            {post.comment && post.comment.length > 0 && (
-                                                <div className="text-left text-gray-600 mb-2 bg-slate-100 p-2">
-                                                    <h3 className="font-semibold text-xl mb-2">Comments:</h3>
-                                                    {post.comment.map((comment, index) => (
-                                                        <div key={index} style={{ backgroundColor: '#your-color-code' }} className="mb-2">
-                                                            {comment.text}
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                <div
+                                    key={index}
+                                    ref={index === postData.length - 1 ? lastPostRef : null}
+                                    className=" w-full bg-purple-200 border border-slate-800 my-4 rounded-3xl"
+                                >
+                                    {!loadingUserPosts && postData.length === 0 && <div>No posts available.</div>}
+                                    {!loading && !loadingPosts && (
+                                        <div className="min-w-2xl">
+                                            {post.imageUrl?.length > 0 && (
+                                                <img
+                                                    src={post.imageUrl[0]}
+                                                    alt=""
+                                                    className="w-full rounded-tl-3xl rounded-tr-3xl h-96 object-cover"
+                                                />
                                             )}
+
+                                            <p className="text-xl font-semibold p-3">{post.title}</p>
+                                            <div
+                                                className="text-center p-5 text-gray-600 overflow-hidden rounded-sm resize-none rounded-md overflow-wrap break-word truncate-3-lines">
+                                                {post.postText}
+                                            </div>
+                                            <>
+                                                <div className="mt-4">
+                                                    {post.comment && post.comment.length > 0 && (
+                                                        <div className="text-left text-gray-600 mb-2">
+                                                            <h3 className="font-semibold border border-slate-600 rounded-sm w-full text-xl p-2 mb-2">Comments:</h3>
+                                                            {post.comment.map((comment, index) => (
+                                                                <div key={index} className = "p-2">
+                                                                    <div className = "font-semibold">{comment.userName} {comment.userSurname}</div>
+                                                                    {comment.text}
+                                                                    <div className="bg-slate-100 h-px w-full mt-4"/>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </>
                                         </div>
-                                    </>
+                                    )}
+                                    <div className="bg-slate-700 h-px w-full mt-4"/>
+                                    <div className="mt-4 relative bottom-2 left-2">
+                                        <button
+                                            onClick={() => handleDeletePost(post)}
+                                            className="mr-2 bg-red-500 text-white px-2 py-1 rounded"
+                                        >
+                                            Delete
+                                        </button>
+                                        <button
+                                            onClick={() => handleEditPost(post)}
+                                            className="bg-blue-500 text-white px-2 py-1 rounded"
+                                        >
+                                            Edit
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="bg-gray-300 h-px w-full mt-4" />
-                                <div className="mt-4 relative bottom-2 left-2">
-                                    <button
-                                        onClick={() => handleDeletePost(post)}
-                                        className="mr-2 bg-red-500 text-white px-2 py-1 rounded"
-                                    >
-                                        Delete
-                                    </button>
-                                    <button
-                                        onClick={() => handleEditPost(post)}
-                                        className="bg-blue-500 text-white px-2 py-1 rounded"
-                                    >
-                                        Edit
-                                    </button>
-                                </div>
-                            </div>
-                        )
-                    )}
+                            )
+                        )}
                 </div>
+            </div>
             </div>
             {showModal && (
                 <div
@@ -377,7 +488,7 @@ const Modal: React.FC = () => {
                             >
                                 <h3 className="text-3xl font-semibold">Create Post</h3>
                             </div>
-                            <div className="overflow-y-auto overflow-x-hidden relative p-6 h-96">
+                            <div className="overflow-y-auto overflow-x-hidden relative w-96 p-3 h-96">
                                 <div className="flex flex-col">
                                     <div className="flex flex-col h-24 p-1">
                                         <input
@@ -401,7 +512,7 @@ const Modal: React.FC = () => {
                                         {imageUrl && (
                                             <div className="relative">
                                                 <img
-                                                    className="w-96 h-96"
+                                                    className="w-full h-auto"
                                                     src={imageUrl}
                                                     alt="Selected"
                                                 />
@@ -417,15 +528,9 @@ const Modal: React.FC = () => {
                                     <div className="flex justify-between">
                                         <button
                                             onClick={handleChooseFile}
-                                            className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                                            className="bg-blue-500 w-full text-white active:bg-blue-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
                                         >
-                                            Choose File
-                                        </button>
-                                        <button
-                                            onClick={handleConfirmSelection}
-                                            className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                                        >
-                                            Confirm Selection
+                                            Choose Image
                                         </button>
                                     </div>
                                 </div>
@@ -445,20 +550,20 @@ const Modal: React.FC = () => {
                                 className="flex items-center justify-between p-6 border-t border-solid border-slate-200 rounded-b"
                             >
                                 <button
-                                    className="text-slate-100 bg-red-600 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                                    className="text-slate-100 bg-red-600 background-transparent font-bold uppercase rounded px-6 py-2  text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
                                     type="button"
                                     onClick={() => setShowModal(false)}
                                 >
                                     Close
                                 </button>
                                 <button
-                                    className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                                    className="bg-blue-500 text-white active:bg-blue-600 font-bold uppercase text-sm px-6 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
                                     type="button"
                                     onClick={() => {
                                         createPost();
                                     }}
                                 >
-                                    Submit Post
+                                    Create Post
                                 </button>
                             </div>
                         </div>

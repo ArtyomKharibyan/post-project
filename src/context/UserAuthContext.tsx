@@ -38,7 +38,7 @@ export const UserContext = createContext<UserAuthContextValue | undefined>(
 );
 
 interface UserProfile {
-    id: number
+    id: number;
     email: string;
     profileId: number;
     name: string;
@@ -53,12 +53,21 @@ export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = (
     const [profileData, setProfileData] = useState<UserProfile | null>(null);
     const [profileId, setProfileId] = useState<number | undefined>(profileData?.id);
 
-    const googleSignIn = () => {
-        const provider = new GoogleAuthProvider()
-        setIsAuth(true)
+    const googleSignIn = async (): Promise<UserCredential> => {
+        const provider = new GoogleAuthProvider();
+        setIsAuth(true);
         localStorage.setItem("isAuth", "true");
-        signInWithPopup(auth, provider)
-    }
+
+        try {
+            const result = await signInWithPopup(auth, provider);
+            console.log("Logged In", result);
+            return result; // Return the user credential object
+        } catch (error) {
+            console.error("Error signing in with Google:", error);
+            throw error; // Rethrow the error to handle it in the component that calls this method
+        }
+    };
+
 
     const createUser = async (email: string, password: string) => {
         setIsAuth(true)

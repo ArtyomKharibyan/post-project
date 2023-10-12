@@ -1,55 +1,13 @@
-import axios from "axios";
+import instance from "./axios";
 
-const API_URL = "http://192.168.10.146:5000/api";
+// move to env
+export const Api_Url = "https://ba15-37-252-83-184.ngrok-free.app/api";
 
-const ApiService = axios.create({
-    baseURL: API_URL,
+instance.interceptors.request.use((config) => {
+    const token = localStorage.token;
+    console.log(token, 12121)
+        config.headers.Authorization = `Bearer ${token}` || '';
+    return config;
 });
 
-export const getPosts = async () => {
-    try {
-        const response = await ApiService.get("/post");
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
-
-export const getCommentsForPost = async (postId: string) => {
-    try {
-        const response = await ApiService.get(`/comment/${postId}`);
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
-
-export const deletePost = async (postId: string) => {
-    try {
-        await ApiService.delete(`/post/${postId}`);
-    } catch (error) {
-        throw error;
-    }
-};
-
-export const editPost = async (postId: string, data: { title: string, postText: string }) => {
-    try {
-        await ApiService.patch(`/post/${postId}`, data);
-    } catch (error) {
-        throw error;
-    }
-};
-
-export const addComment = async (postId: string, commentText: string, profileId: string) => {
-    try {
-        await ApiService.post("/comment", {
-            text: commentText,
-            profileId: profileId,
-            postId: postId,
-        });
-    } catch (error) {
-        throw error;
-    }
-};
-
-export default ApiService;
+export default Api_Url;
