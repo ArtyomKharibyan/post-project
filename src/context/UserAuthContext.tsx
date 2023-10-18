@@ -29,8 +29,6 @@ interface UserAuthContextValue {
     setProfileData: Dispatch<SetStateAction<UserProfile | null>>;
     profileId : number | undefined
     setProfileId: Dispatch<SetStateAction<number | undefined>>;
-    setAsa: Dispatch<SetStateAction<UserProfile | null>>;
-    asa: UserProfile | null;
 }
 
 export const UserContext = createContext<UserAuthContextValue | undefined>(
@@ -43,11 +41,12 @@ interface UserProfile {
     profileId: number;
     name: string;
     surname: string;
+    avatarUrl: string;
+    displayName: string
 }
 
 export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
-    const [asa, setAsa] = useState<UserProfile | null>(null);
     const [selectedPost, setSelectedPost] = useState<string | null>(null);
     const [isAuth, setIsAuth] = useState(localStorage.getItem("isAuth") === "true");
     const [profileData, setProfileData] = useState<UserProfile | null>(null);
@@ -61,10 +60,10 @@ export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = (
         try {
             const result = await signInWithPopup(auth, provider);
             console.log("Logged In", result);
-            return result; // Return the user credential object
+            return result;
         } catch (error) {
             console.error("Error signing in with Google:", error);
-            throw error; // Rethrow the error to handle it in the component that calls this method
+            throw error;
         }
     };
 
@@ -87,12 +86,8 @@ export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = (
         return signOut(auth);
     }
 
-    console.log(auth.currentUser?.uid)
-
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            console.log(currentUser);
-            console.log(user);
             setUser(currentUser);
         });
 
@@ -123,8 +118,6 @@ export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = (
         setProfileData,
         profileId,
         setProfileId,
-        setAsa,
-        asa
     };
 
     return (

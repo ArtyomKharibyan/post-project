@@ -6,14 +6,6 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-    const { user } = UserAuth();
-
-    useEffect(() => {
-        if (!user) {
-            console.log("stexica");
-        }
-    }, [user]);
-
     return <>{children}</>;
 };
 

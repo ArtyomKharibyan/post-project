@@ -1,7 +1,7 @@
 import React from 'react';
 
 import './App.css';
-import Profile from "./components/pages/Profile";
+import Profile  from "./components/pages/Profile";
 
 function App() {
 

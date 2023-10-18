@@ -1,11 +1,11 @@
 import instance from "./axios";
 
-// move to env
-export const Api_Url = "https://ba15-37-252-83-184.ngrok-free.app/api";
+export const Api_Url = process.env.REACT_APP_BASE_URL;
+
+console.log(Api_Url)
 
 instance.interceptors.request.use((config) => {
     const token = localStorage.token;
-    console.log(token, 12121)
         config.headers.Authorization = `Bearer ${token}` || '';
     return config;
 });

@@ -2,7 +2,6 @@ import React, {useEffect, useState, useCallback } from "react";
 import axios from "../server/axios";
 import Header from "./Header";
 import { UserAuth } from "../../context/UserAuthContext";
-import { AiFillDelete, AiOutlineEdit } from "react-icons/ai";
 import {Api_Url} from "../server/config";
 
 interface Post {
@@ -27,13 +26,9 @@ interface Comment {
 
 const Feed: React.FC = () => {
     const [postList, setPostList] = useState<Post[]>([]);
-    const [editedTitle, setEditedTitle] = useState<string>("");
-    const [editedContent, setEditedContent] = useState<string>("");
     const [commentTexts, setCommentTexts] = useState<{ [postId: string]: string }>({});
     const [visibleCommentsCounts, setVisibleCommentsCounts] = useState<{ [postId: string]: number }>({});
     const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
-    const [editPostId, setEditPostId] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const { isAuth, profileData } = UserAuth();
     const profileId = profileData?.id || "";
@@ -41,119 +36,61 @@ const Feed: React.FC = () => {
     const initialCommentsCount = 3;
     const loadMoreCommentsCount = 3;
 
-    useEffect(() => {
-        const getPosts = async () => {
-            try {
-                const response = await axios.get(`${Api_Url}/feed?page=1`);
-                if (Array.isArray(response.data)) {
-                    const posts = response.data.map((post: any) => ({
-                        ...post,
-                        comments: post.comment || [],
-                    })) as Post[];
+    const getPosts = async (page: number) => {
+        try {
+            const response = await axios.get(`${Api_Url}/feed?page=${page}`);
+            if (Array.isArray(response.data)) {
+                const posts = response.data.map((post: any) => ({
+                    ...post,
+                    comments: post.comment || [],
+                })) as Post[];
 
+                if (page === 1) {
                     setPostList(posts);
-                    const initialVisibleCommentsCounts: { [postId: string]: number } = {};
-                    posts.forEach((post) => {
-                        initialVisibleCommentsCounts[post.id] = initialCommentsCount;
-                    });
-                    setVisibleCommentsCounts(initialVisibleCommentsCounts);
                 } else {
-                    console.error("Invalid or empty response data");
-                    setPostList([]);
+                    setPostList((prevPostList) => [...prevPostList, ...posts]);
                 }
-            } catch (error) {
-                console.error("Error fetching posts:", error);
-            }
-        };
 
-        getPosts();
-    }, []);
+                const newVisibleCommentsCounts: { [postId: string]: number } = {};
+                posts.forEach((post) => {
+                    newVisibleCommentsCounts[post.id] = initialCommentsCount;
+                });
+ 
+                setVisibleCommentsCounts((prevVisibleCommentsCounts) => {
+                    return { ...prevVisibleCommentsCounts, ...newVisibleCommentsCounts };
+                });
+            } else {
+                console.error("Invalid or empty response data");
+                setPostList([]);
+            }
+        } catch (error) {
+            console.error("Error fetching posts:", error);
+        }
+    };
+
 
     useEffect(() => {
-        const handleScroll = () => {
-            const windowHeight = window.innerHeight;
-            const documentHeight = document.documentElement.scrollHeight;
-            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        getPosts(currentPage);
+    }, [currentPage]);
 
-            if (windowHeight + scrollTop >= documentHeight - 200) {
-                loadMorePosts();
-            }
-        };
+    const handleScroll = () => {
+        const windowHeight = window.innerHeight;
+        const documentHeight = document.documentElement.scrollHeight;
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
 
+        if (windowHeight + scrollTop >= documentHeight - 200) {
+            setCurrentPage((prevPage) => prevPage + 1);
+        }
+    };
+
+    useEffect(() => {
         window.addEventListener("scroll", handleScroll);
 
         return () => {
             window.removeEventListener("scroll", handleScroll);
         };
-    }, [isLoading, currentPage]);
+    }, []);
 
-    const loadMorePosts = async () => {
-        if (isLoading) return;
-        setIsLoading(true);
-        try {
-            const response = await axios.get(`${Api_Url}/feed?page=${currentPage + 1}`);
-            if (Array.isArray(response.data)) {
-                const newPosts = response.data.map((post: any) => ({
-                    ...post,
-                    comments: post.comment || [],
-                })) as Post[];
-                setPostList((prevPostList) => [...prevPostList, ...newPosts]);
-
-                setVisibleCommentsCounts((prevVisibleCommentsCounts) => {
-                    const updatedCounts = { ...prevVisibleCommentsCounts };
-                    newPosts.forEach((post) => {
-                        updatedCounts[post.id] = initialCommentsCount;
-                    });
-                    return updatedCounts;
-                });
-
-                setCurrentPage(currentPage + 1);
-            }
-        } catch (error) {
-            console.error("Error fetching more posts:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-
-    const handleDeletePost = async (postId: string) => {
-        try {
-            await axios.delete(`${Api_Url}/post/${postId}`);
-            setPostList((prevPostData) => prevPostData.filter((post) => post.id !== postId));
-        } catch (error) {
-            console.error("Error deleting post: ", error);
-        }
-    };
-
-    const handleEditPost = (postId: string) => {
-        const postToEdit = postList.find((post) => post.id === postId);
-        if (postToEdit) {
-            setEditedTitle(postToEdit.title);
-            setEditedContent(postToEdit.postText);
-            setEditPostId(postId);
-        }
-    };
-
-    const handleSaveEdit = async () => {
-        if (!editPostId || !editedTitle || !editedContent) return;
-        try {
-            await axios.patch(`${Api_Url}/post/${editPostId}`, {
-                title: editedTitle,
-                postText: editedContent,
-            });
-            setPostList((prevPostData) =>
-                prevPostData.map((post) =>
-                    post.id === editPostId ? { ...post, title: editedTitle, postText: editedContent } : post
-                )
-            );
-            setEditPostId(null);
-            setEditedTitle("");
-            setEditedContent("");
-        } catch (error) {
-            console.error("Error editing post: ", error);
-        }
-    };
 
     const handleCommentChange = useCallback(
         (postId: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,10 +158,10 @@ const Feed: React.FC = () => {
             <Header />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
                 {postList
-                    .map((post) => (
-                        <div className="p-3 rounded-2xl bg-purple-200 border border-black" key={post.id}>
+                    .map((post, index, ) => (
+                        <div className="p-3 rounded-2xl bg-purple-200 border border-black" key={index}>
                             <div>
-                                {post.imageUrl && (
+                                {post?.imageUrl && (
                                     <img
                                         src={post.imageUrl}
                                         alt=""
@@ -232,44 +169,12 @@ const Feed: React.FC = () => {
                                     />
                                 )}
                             </div>
-                            {editPostId === post.id ? (
-                                <>
-                                    <input
-                                        className="w-full mb-2 p-1 rounded-md border border-silver-300"
-                                        type="text"
-                                        placeholder="Enter your edited title"
-                                        value={editedTitle}
-                                        onChange={(e) => setEditedTitle(e.target.value)}
-                                    />
-                                    <textarea
-                                        className="w-full mb-2 p-1 rounded-md border border-silver-300 resize-none"
-                                        placeholder="Enter your edited content"
-                                        value={editedContent}
-                                        onChange={(e) => setEditedContent(e.target.value)}
-                                    />
-                                    <button className="bg-blue-500 text-white w-60 p-2" onClick={handleSaveEdit}>
-                                        Save Changes
-                                    </button>
-                                </>
-                            ) : (
                                 <>
                                     <p className="text-xl font-semibold p-3">
                                         {post.title}
                                     </p>
                                     <div className="text-center p-5 text-gray-600 overflow-hidden">{post.postText}</div>
                                 </>
-                            )}
-                            {isAuth && profileId === post.profileId && (
-                                <>
-                                    <button onClick={() => handleEditPost(post.id)}>
-                                        <AiOutlineEdit className="h-7 w-7 mr-2" />
-                                    </button>
-                                    <button onClick={() => handleDeletePost(post.id)}>
-                                        <AiFillDelete style={{ color: "red" }} className="bg-red h-7 w-7" />
-                                    </button>
-                                </>
-                            )}
-
                             {isAuth && (
                                 <div className="mt-4 relative bottom-2 left-2">
                                     <div className="flex p-1 mb-2">

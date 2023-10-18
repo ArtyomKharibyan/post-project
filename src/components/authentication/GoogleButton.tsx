@@ -17,9 +17,7 @@ const GoogleButton = () => {
             const userCredential: firebase.auth.UserCredential = await googleSignIn();
 
             if (userCredential?.user) {
-                const idToken = await storeTokenInLocalStorage(userCredential);
-
-                console.log(idToken)
+                await storeTokenInLocalStorage(userCredential);
 
                 const fullName = userCredential.user.displayName || "";
                 const wordsArray = fullName.split(" ");

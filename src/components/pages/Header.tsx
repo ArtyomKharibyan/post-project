@@ -9,7 +9,7 @@ import { Api_Url } from "../server/config";
 import Loading from "../images/Loading.gif";
 
 const Header = () => {
-    const { logOut, setIsAuth, isAuth, profileData, setProfileData, user } = UserAuth();
+    const { logOut, setIsAuth, isAuth, profileData, setProfileData } = UserAuth();
     const [isLoading, setIsLoading] = useState(true);
 
     const auth = getAuth();
@@ -38,7 +38,6 @@ const Header = () => {
                 if (isMounted && response.status === 200) {
                     const data = response.data;
                     setProfileData(data);
-                    console.log("Profile Data:", data);
                 } else if (isMounted) {
                     console.error("Error fetching profile data:", response.statusText);
                 }
@@ -70,8 +69,8 @@ const Header = () => {
                 const user = auth.currentUser;
                 // @ts-ignore
                 setProfileData({
-                    name: user?.displayName ?? "",
-                    email: user?.email ?? "",
+                    name: user?.displayName || "",
+                    email: user?.email || "",
                 });
             } catch (error) {
                 console.error("Error fetching user data:", error);
@@ -106,20 +105,6 @@ const Header = () => {
             {!isLoading && (
                 <div className="flex justify-center w-full">
                     <div className="flex justify-end p-2 w-full text-center items-center text-slate-100">
-                        {user?.providerData[0]?.providerId === "google.com" ? (
-                            <div>
-                                <p className="p-2 relative text-slate-100">
-                                    {user.displayName} {user.email}
-                                </p>
-                            </div>
-                        ) : (
-                            <>
-                                <p className="p-2 relative text-slate-100">{profileData?.email}</p>
-                                <p className="p-2 text-sm font-semibold text-slate-100">
-                                    {profileData?.name} {profileData?.surname}
-                                </p>
-                            </>
-                        )}
                         {isAuth ? (
                             <>
                                 <Link to="/posts" className="p-2 text-sm font-semibold">
@@ -127,6 +112,9 @@ const Header = () => {
                                 </Link>
                                 <Link to="/feed" className="p-2 text-sm font-semibold">
                                     Feed
+                                </Link>
+                                <Link to="/profile" className="p-2 text-sm font-semibold">
+                                    Profile
                                 </Link>
                                 <button onClick={handleLogOut} className="border px-6 py-2 my-4 border-black">
                                     LogOut

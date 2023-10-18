@@ -2,6 +2,10 @@ import axios from 'axios';
 
 const baseURL = process.env.REACT_APP_BASE_URL;
 
+console.log(baseURL)
+
+console.log(process.env.REACT_APP_TITLE)
+
 const instance = axios.create({
     baseURL: baseURL,
     headers: {

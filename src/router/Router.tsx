@@ -6,6 +6,7 @@ import App from "../App";
 import ProtectedRoute from "./ProtectedRoute";
 import CreatePost from "../components/pages/Posts";
 import Feed from "../components/pages/Feed";
+import NotFoundPage from "../components/notFound/NotFoundPage";
 
 const Router = () => {
 
@@ -16,6 +17,7 @@ const Router = () => {
                 <Route path="/signIn" element={<SignIn/>}/>
                 <Route path="/posts" element=<CreatePost/>/>
                 <Route path="/feed" element={<Feed/>}/>
+                <Route path="*" element={<NotFoundPage/>}/>
                 <Route path="/profile" element={<ProtectedRoute><App/></ProtectedRoute>}/>
         </Routes>
 )
