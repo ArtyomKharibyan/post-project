@@ -1,7 +1,10 @@
 import React, {useEffect} from "react";
 
-// @ts-ignore
-function Notification({show}) {
+interface NotificationProps {
+    show: boolean;
+}
+
+const Notification: React.FC<NotificationProps> = ({ show }) => {
 
     useEffect(() => {
         let timer: string | number | NodeJS.Timeout | undefined;
@@ -23,7 +26,7 @@ function Notification({show}) {
             {show ? (
                 <div
                     className="fixed right-1 border border-slate-400 top-4 transform transition-transform duration-300 ease-in-out translate-y-0 opacity-100 translate-y-full opacity-0">
-                    <div className="bg-slate-100 rounded-md p-7 shadow-lg flex items-center space-x-2">
+                    <div className="bg-slate-100 p-7 shadow-lg flex items-center space-x-2">
         <span className="text-3xl">
           <i className="bx bx-check"/>
         </span>
@@ -35,6 +38,6 @@ function Notification({show}) {
             )}
         </div>
     );
-};
+}
 
 export default Notification;

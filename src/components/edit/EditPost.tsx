@@ -1,10 +1,9 @@
 import React from "react"
-// @ts-ignore
-import {Post} from "../pages/Posts"
+import {Post as PostType} from "../pages/Posts"
 
 interface EditPostProps {
-    editingPost: Post | null;
-    setEditingPost: React.Dispatch<React.SetStateAction<Post | null>>;
+    editingPost: PostType | null;
+    setEditingPost: React.Dispatch<React.SetStateAction<PostType | null>>;
     tempImageUrl: string | null;
     isUploading: boolean;
     handleImageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;

@@ -3,7 +3,6 @@ import { ReactComponent as OwoSVG } from "../images/Owl.svg";
 import "../../index.css";
 import { UserAuth } from "../../context/UserAuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { getAuth } from "firebase/auth";
 import axios from "../server/axios";
 import { Api_Url } from "../server/config";
 import Loading from "../images/Loading.gif";
@@ -12,7 +11,6 @@ const Header = () => {
     const { logOut, setIsAuth, isAuth, profileData, setProfileData } = UserAuth();
     const [isLoading, setIsLoading] = useState(true);
 
-    const auth = getAuth();
     const navigate = useNavigate();
 
     const handleLogOut = async () => {
@@ -32,12 +30,12 @@ const Header = () => {
         let isMounted = true;
 
         const fetchData = async () => {
-            setIsLoading(true);
             try {
                 const response = await axios.get(`${Api_Url}/profile`);
                 if (isMounted && response.status === 200) {
                     const data = response.data;
                     setProfileData(data);
+                    console.log(profileData)
                 } else if (isMounted) {
                     console.error("Error fetching profile data:", response.statusText);
                 }
@@ -52,33 +50,12 @@ const Header = () => {
             }
         };
 
-        if (isAuth && (!profileData || !profileData.name || !profileData.surname || !profileData.email)) {
             fetchData();
-        } else {
-            setIsLoading(false);
-        }
 
         return () => {
             isMounted = false;
         };
-    }, [isAuth, auth, profileData, setProfileData]);
-
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const user = auth.currentUser;
-                // @ts-ignore
-                setProfileData({
-                    name: user?.displayName || "",
-                    email: user?.email || "",
-                });
-            } catch (error) {
-                console.error("Error fetching user data:", error);
-            }
-        };
-
-        fetchUserData();
-    }, [setProfileData, auth]);
+    }, [setProfileData]);
 
     if (isLoading) {
         return (

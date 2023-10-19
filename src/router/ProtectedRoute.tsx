@@ -1,5 +1,4 @@
-import React, { ReactNode, useEffect } from "react";
-import { UserAuth } from "../context/UserAuthContext";
+import React, { ReactNode } from "react";
 
 interface ProtectedRouteProps {
     children: ReactNode;

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, ChangeEvent } from "react";
 import Header from "./Header";
 import { UserAuth } from "../../context/UserAuthContext";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -7,11 +7,10 @@ import { storage } from "../../firebase/firebase";
 const Profile = () => {
     const { user, profileData } = UserAuth();
     const [avatarURL, setAvatarURL] = useState("");
-    const fileInputRef = useRef(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    // @ts-ignore
-    const handleAvatarChange = async (event) => {
-        const file = event.target.files[0];
+    const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
         if (file) {
             const storageRef = ref(storage, `avatars/${file.name}`);
             await uploadBytes(storageRef, file);
@@ -20,6 +19,9 @@ const Profile = () => {
         }
     };
 
+    console.log(user)
+    console.log(profileData)
+
     const setDefaultAvatar = async () => {
         const defaultAvatarURL =
             "https://firebasestorage.googleapis.com/v0/b/post-project-80c0a.appspot.com/o/images%2FUserAvatar.png?alt=media&token=af9525b4-1f0e-468f-9352-f04004248dfc";
@@ -27,8 +29,7 @@ const Profile = () => {
     };
 
     useEffect(() => {
-        // @ts-ignore
-        if (!profileData?.avatarURL) {
+        if (!profileData?.avatarUrl) {
             setDefaultAvatar();
         } else {
             setAvatarURL(profileData.avatarUrl);
@@ -36,8 +37,7 @@ const Profile = () => {
     }, [profileData]);
 
     const handleButtonClick = () => {
-        // @ts-ignore
-        fileInputRef.current.click();
+        fileInputRef?.current?.click();
     };
 
     return (
@@ -48,22 +48,22 @@ const Profile = () => {
                     <div className="text-slate-950 z-10 w-full">
                         {user?.providerData[0]?.providerId === "google.com" ? (
                             <div>
-                                <p className="p-2  relative text-2xl">{user.displayName}</p>
+                                <p className="p-2 break-all relative text-2xl">{user.displayName}</p>
                                 {avatarURL && <div className="flex justify-center align-center items-center w-full rounded-full"><img className="w-40 rounded-full h-40 object-cover border-2 border-silver" src={avatarURL} alt="Avatar" /></div>} <br />
                                 <button className="bg-blue-500 text-white px-4 py-2 rounded mt-2" onClick={handleButtonClick}>Choose Avatar</button>
                                 <input type="file" onChange={handleAvatarChange} ref={fileInputRef} className="hidden" />
-                                <p className = "p-2 relative text-xl">{user.email}</p>
+                                <p className = "p-2 relative break-all text-xl">{user.email}</p>
                             </div>
                         ) : (
                             <>
-                                <p className="p-2 text-2xl">
+                                <p className="p-2 text-2xl break-all">
                                     {profileData?.name} {profileData?.surname}
                                 </p>
                                 {avatarURL && <div className="flex justify-center align-center items-center w-full rounded-full">
                                     <img className="w-40 rounded-full h-40 object-cover border-2 border-silver" src={avatarURL} alt="Avatar" /></div>}
                                 <button className="bg-blue-500 text-white px-4 py-2 rounded mt-2" onClick={handleButtonClick}>Choose Avatar</button>
                                 <input type="file" onChange={handleAvatarChange} ref={fileInputRef} className="hidden" />
-                                <p className="p-2 text-xl relative">{profileData?.email}</p>
+                                <p className="p-2 break-all text-xl relative">{profileData?.email}</p>
                             </>
                         )}
                     </div>

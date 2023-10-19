@@ -1,23 +1,32 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { UserAuth } from "../../context/UserAuthContext";
-import axios from '../server/axios';
-import { Api_Url } from "../server/config";
-import firebase from "firebase/compat";
 import "firebase/compat/auth";
+import {UserCredential} from "firebase/auth";
+import {storeTokenInLocalStorage} from "../../token/token";
+import axios from "../server/axios";
+import {Api_Url} from "../server/config";
 
-const GoogleButton = () => {
+type Props = {
+    additionalClassName?: string;
+    isSignUp?: boolean;
+}
+
+const GoogleButton = ({additionalClassName = '', isSignUp = false}: Props) => {
     const navigate = useNavigate();
-    const { googleSignIn, user } = UserAuth();
+    const { googleSignIn } = UserAuth();
 
-    const handleGoogleSignIn = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-        e.preventDefault();
+    const handleGoogleSignIn = async () => {
         try {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            const userCredential: firebase.auth.UserCredential = await googleSignIn();
+            const userCredential: UserCredential = await googleSignIn();
+
+            console.log(userCredential, "HELLO WOOOOORLD")
 
             if (userCredential?.user) {
                 await storeTokenInLocalStorage(userCredential);
+                console.log(userCredential?.user)
 
                 const fullName = userCredential.user.displayName || "";
                 const wordsArray = fullName.split(" ");
@@ -32,37 +41,29 @@ const GoogleButton = () => {
                     email: email,
                 };
 
-                await axios.post(`${Api_Url}/profile`, userData);
+                console.log(name)
+                console.log(surname)
+                console.log(email)
+                console.log(userData, "User Dataaaaaaaaaaaaaaaaaaaaaa")
+
+                if (isSignUp) {
+                    await axios.post(`${Api_Url}/profile`, userData);
+                } else {
+                    console.log("No!")
+                }
 
                 navigate("/profile");
             }
         } catch (error) {
             console.error(error);
         }
-    };
-
-    const storeTokenInLocalStorage = async (userCredential: firebase.auth.UserCredential) => {
-        try {
-            const idToken = await userCredential.user?.getIdToken(true) || "";
-            localStorage.setItem("token", idToken);
-            return idToken;
-        } catch (error) {
-            console.error('Error storing token in localStorage:', error);
-            return "";
-        }
-    };
-
-    useEffect(() => {
-        if (user !== null) {
-            navigate("/profile");
-        }
-    }, [navigate, user]);
+    }
 
     return (
         <div className="p-5">
             <button
                 onClick={handleGoogleSignIn}
-                className="w-full flex text-center items-center justify-center h-12 bg-blue-500 rounded-md shadow-md relative cursor-pointer transition duration-300 ease-in-out transform hover:scale-105 active:bg-blue-700"
+                className={`w-full bg-blue-500 flex text-center items-center justify-center h-12 rounded-md shadow-md relative cursor-pointer transition duration-300 ease-in-out ${additionalClassName}`}
             >
                 <div className="absolute top-1 left-1 w-10 h-10 bg-white rounded-md flex items-center justify-center">
                     <img

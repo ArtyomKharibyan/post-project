@@ -1,15 +1,14 @@
-import React from 'react';
+import React from "react";
 
-import './App.css';
-import Profile  from "./components/pages/Profile";
+import "./App.css";
+import Profile from "./components/pages/Profile";
 
 function App() {
-
-    return (
-        <div className="h-800">
-            <Profile/>
-        </div>
-    );
+  return (
+    <div className="h-800">
+      <Profile />
+    </div>
+  );
 }
 
 export default App;

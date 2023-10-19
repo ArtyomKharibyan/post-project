@@ -5,6 +5,7 @@ import axios from '../server/axios';
 import {updateProfile, UserCredential} from "firebase/auth";
 import GoogleButton from "./GoogleButton"
 import {Api_Url} from "../server/config";
+import {storeTokenInLocalStorage} from "../../token/token";
 
 interface InputFieldProps {
     placeholder: string;
@@ -55,16 +56,6 @@ const SignUp: React.FC = () => {
         }
     };
 
-    const storeTokenInLocalStorage = async (userCredential: UserCredential) => {
-        try {
-            const idToken: string = await userCredential.user.getIdToken(true);
-            localStorage.setItem("token", idToken);
-            return idToken;
-        } catch (error) {
-            console.error('Error storing token in localStorage:', error);
-        }
-    };
-
     const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         setLoading(true);
@@ -99,7 +90,7 @@ const SignUp: React.FC = () => {
             <div className="w-96 h-600 p-5 relative border-2 border-right/50 text-center rounded-xl block bg-slate-100">
                 <p className="font-brush-script text-4xl p-5">WebLab</p>
                 <div className="grid grid-rows-[80px]">
-                    <GoogleButton/>
+                    <GoogleButton additionalClassName="bg-blue-500" isSignUp={true} />
                     <p className="text-red-700">{error}</p>
                     <div className="flex justify-center items-center text-center">
                         <div className="bg-gray-300 h-px w-full"/>

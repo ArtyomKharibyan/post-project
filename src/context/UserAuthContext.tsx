@@ -20,7 +20,7 @@ interface UserAuthContextValue {
     logOut: () => Promise<void>;
     user: User | null;
     signIn: (email: string, password: string) => Promise<UserCredential>;
-    googleSignIn: () => void;
+    googleSignIn: () => Promise<UserCredential | void>;
     selectedPost: null | string;
     setSelectedPost: Dispatch<SetStateAction<string | null>>;
     isAuth: boolean;
@@ -52,7 +52,7 @@ export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = (
     const [profileData, setProfileData] = useState<UserProfile | null>(null);
     const [profileId, setProfileId] = useState<number | undefined>(profileData?.id);
 
-    const googleSignIn = async (): Promise<UserCredential> => {
+    const googleSignIn = async (): Promise<UserCredential | void> => {
         const provider = new GoogleAuthProvider();
         setIsAuth(true);
         localStorage.setItem("isAuth", "true");

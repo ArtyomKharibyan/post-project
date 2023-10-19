@@ -8,10 +8,10 @@ import firebase from "firebase/compat";
 import axios from "../server/axios";
 import {UserAuth} from "../../context/UserAuthContext";
 import {Api_Url} from "../server/config"
-import EditPost from "../shallow/EditPost";
+import EditPost from "../edit/EditPost";
 import Notification from "../notification/Notification";
 
-interface Post {
+export interface Post {
     id: number;
     imageUrl: string;
     postText: string;
@@ -100,19 +100,19 @@ const Modal: React.FC = () => {
         try {
             if (profileId) {
                 const response = await axios.get(`${Api_Url}/post/${profileId}?page=${currentPage}`);
-            // let sortedPosts = response.data.sort((a: { id: number; }, b: { id: number; }) => b.id - a.id);
-            if (isFetch) {
-                setPostData(prevState => [...prevState, ...response.data]);
-            } else {
-                setPostData(response.data);
-            }}
+                // let sortedPosts = response.data.sort((a: { id: number; }, b: { id: number; }) => b.id - a.id);
+                if (isFetch) {
+                    setPostData(prevState => [...prevState, ...response.data]);
+                } else {
+                    setPostData(response.data);
+                }}
         } catch (error) {
             console.error('Error fetching data:', error);
         }
     }, [currentPage, profileId]);
 
     useEffect(() => {
-      setCurrentPage(1)
+        setCurrentPage(1)
     }, [profileId])
 
 
@@ -147,7 +147,6 @@ const Modal: React.FC = () => {
         }
     };
 
-
     useEffect(() => {
         if (editingPost) {
             setEditedImageUrl(editingPost.imageUrl || null);
@@ -163,6 +162,7 @@ const Modal: React.FC = () => {
                 username: user.displayName || "",
             };
             setUser(userData);
+            console.log(user)
         } else {
             setUser(null);
         }
@@ -224,7 +224,6 @@ const Modal: React.FC = () => {
                 const url = await getDownloadURL(imageRef);
 
                 setImageUrl(url);
-                // @ts-ignore
 
             } catch (error) {
                 console.error("Error uploading file:", error);
@@ -253,6 +252,8 @@ const Modal: React.FC = () => {
     const handleEditPost = (postToEdit: Post): void => {
         setEditingPost(postToEdit);
     };
+
+    console.log(user)
 
     const resetForm = () => {
         setTitle("");
@@ -336,7 +337,7 @@ const Modal: React.FC = () => {
 
                                             <p className="text-xl font-semibold p-3">{post.title}</p>
                                             <div
-                                                className="text-center p-5 text-gray-600 overflow-hidden line-clamp-3 leading-6 whitespace-pre-wrap">
+                                                className="text-center p-5 text-gray-600 overflow-hidden line-clamp-3 break-all">
                                                 {post.postText}
                                             </div>
                                             <>

@@ -4,7 +4,7 @@ import Header from "./Header";
 import { UserAuth } from "../../context/UserAuthContext";
 import {Api_Url} from "../server/config";
 
-interface Post {
+interface PostWithLoading {
     name: string;
     surname: string;
     id: string;
@@ -25,7 +25,7 @@ interface Comment {
 }
 
 const Feed: React.FC = () => {
-    const [postList, setPostList] = useState<Post[]>([]);
+    const [postList, setPostList] = useState<PostWithLoading[]>([]);
     const [commentTexts, setCommentTexts] = useState<{ [postId: string]: string }>({});
     const [visibleCommentsCounts, setVisibleCommentsCounts] = useState<{ [postId: string]: number }>({});
     const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
@@ -40,10 +40,10 @@ const Feed: React.FC = () => {
         try {
             const response = await axios.get(`${Api_Url}/feed?page=${page}`);
             if (Array.isArray(response.data)) {
-                const posts = response.data.map((post: any) => ({
+                const posts = response.data.map((post) => ({
                     ...post,
                     comments: post.comment || [],
-                })) as Post[];
+                })) as PostWithLoading[];
 
                 if (page === 1) {
                     setPostList(posts);
