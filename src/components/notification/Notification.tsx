@@ -19,8 +19,6 @@ const Notification: React.FC<NotificationProps> = ({show}) => {
         };
     }, [show]);
 
-    console.log(show)
-
     return (
         <div>
             {show ? (

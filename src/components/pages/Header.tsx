@@ -8,7 +8,7 @@ import { Api_Url } from "../server/config";
 import Loading from "../images/Loading.gif";
 
 const Header = () => {
-    const { logOut, setIsAuth, isAuth, profileData, setProfileData } = UserAuth();
+    const { logOut, setIsAuth, isAuth, setProfileData } = UserAuth();
     const [isLoading, setIsLoading] = useState(true);
     const location = useLocation();
     const navigate = useNavigate();
@@ -41,7 +41,6 @@ const Header = () => {
                 if (isMounted && response.status === 200) {
                     const data = response.data;
                     setProfileData(data);
-                    console.log(profileData)
                 } else if (isMounted) {
                     console.error("Error fetching profile data:", response.statusText);
                 }

@@ -1,7 +1,7 @@
-import React, {useEffect, useState, useCallback } from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import axios from "../server/axios";
 import Header from "./Header";
-import { UserAuth } from "../../context/UserAuthContext";
+import {UserAuth} from "../../context/UserAuthContext";
 import {Api_Url} from "../server/config";
 import useInfiniteScroll from "../pagination/Pagination";
 
@@ -23,6 +23,7 @@ interface Comment {
     text: string;
     userName: string;
     userSurname: string;
+    timestamp: number;
 }
 
 const Feed: React.FC = () => {
@@ -31,7 +32,7 @@ const Feed: React.FC = () => {
     const [visibleCommentsCounts, setVisibleCommentsCounts] = useState<{ [postId: string]: number }>({});
     const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const { isAuth, profileData } = UserAuth();
+    const {isAuth, profileData} = UserAuth();
     const profileId = profileData?.id || "";
 
     const initialCommentsCount = 3;
@@ -56,9 +57,9 @@ const Feed: React.FC = () => {
                 posts.forEach((post) => {
                     newVisibleCommentsCounts[post.id] = initialCommentsCount;
                 });
- 
+
                 setVisibleCommentsCounts((prevVisibleCommentsCounts) => {
-                    return { ...prevVisibleCommentsCounts, ...newVisibleCommentsCounts };
+                    return {...prevVisibleCommentsCounts, ...newVisibleCommentsCounts};
                 });
             } else {
                 console.error("Invalid or empty response data");
@@ -73,6 +74,13 @@ const Feed: React.FC = () => {
     useEffect(() => {
         getPosts(currentPage);
     }, [currentPage]);
+
+    const formatDate = (timestamp: number) => {
+        const date = new Date(timestamp);
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+    };
 
     useInfiniteScroll(setCurrentPage);
 
@@ -97,11 +105,12 @@ const Feed: React.FC = () => {
                 id: "",
                 userName: currentUserName,
                 userSurname: currentUserSurname,
+                timestamp: Date.now(),
             };
 
             setPostList((prevPostList) =>
                 prevPostList.map((post) =>
-                    post.id === postId ? { ...post, comments: [...post.comments, newComment] } : post
+                    post.id === postId ? {...post, comments: [...post.comments, newComment]} : post
                 )
             );
 
@@ -116,12 +125,13 @@ const Feed: React.FC = () => {
                 postId: postId,
                 userName: newComment.userName,
                 userSurname: newComment.userSurname,
+                timestamp: newComment.timestamp
             });
 
             if (response.data.id) {
                 setPostList((prevPostList) =>
                     prevPostList.map((post) =>
-                        post.id === postId ? { ...post, comments: [...post.comments, response.data] } : post
+                        post.id === postId ? {...post, comments: [...post.comments, response.data]} : post
                     )
                 );
             }
@@ -139,26 +149,32 @@ const Feed: React.FC = () => {
 
     return (
         <div>
-            <Header />
+            <Header/>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
                 {postList
-                    .map((post, index, ) => (
-                        <div className="p-3 rounded-2xl bg-purple-200" key={index}>
+                    .map((post, index,) => (
+                        <div className="p-3 rounded-2xl bg-purple-200 border border-black" key={index}>
                             <div>
-                                {post?.imageUrl && (
+                                {post?.imageUrl ? (
                                     <img
                                         src={post.imageUrl}
                                         alt=""
                                         className="w-full h-96 object-cover"
                                     />
+                                ) : (
+                                    <img
+                                        src="https://firebasestorage.googleapis.com/v0/b/post-project-80c0a.appspot.com/o/images%2FNo-Image-Placeholder.svg.png?alt=media&token=3cbf17a7-c089-494a-b2ab-feeeac5fa57c"
+                                        alt="No Image"
+                                        className="w-full h-96 object-cover"
+                                    />
                                 )}
                             </div>
-                                <>
-                                    <p className="text-xl font-semibold p-3">
-                                        {post.title}
-                                    </p>
-                                    <div className="text-center p-5 text-gray-600 overflow-hidden">{post.postText}</div>
-                                </>
+                            <>
+                                <p className="text-xl font-semibold p-3">
+                                    {post.title}
+                                </p>
+                                <div className="text-center p-5 text-gray-600 overflow-hidden">{post.postText}</div>
+                            </>
                             {isAuth && (
                                 <div className="mt-4 relative bottom-2 left-2">
                                     <div className="flex p-1 mb-2">
@@ -184,9 +200,13 @@ const Feed: React.FC = () => {
                                     </div>
                                     <div className="text-gray-600 mt-4">
                                         {post.comments.slice(0, visibleCommentsCounts[post.id] || initialCommentsCount).map((comment, index) => (
-                                            <div key={index} className="mb-2 bg-slate-100 relative right-2 rounded-2xl p-2">
-                                                <strong>User: {`${comment?.userName} ${comment?.userSurname}`}</strong> <br />
-                                                {comment.text}
+                                            <div key={index}
+                                                 className="mb-2 bg-slate-100 relative right-2 rounded-2xl p-2">
+                                                <strong>User: {`${comment?.userName} ${comment?.userSurname}`}</strong>
+                                                <br/>
+                                                <div className = "flex break-all flex-row	justify-between"> {comment.text}<span
+                                                    className="flex justify-end text-xs text-current	">{formatDate(comment.timestamp)}</span>
+                                                </div>
                                             </div>
                                         ))}
                                         {post.comments.length > initialCommentsCount && visibleCommentsCounts[post.id] < post.comments.length && (
@@ -216,3 +236,4 @@ const Feed: React.FC = () => {
 };
 
 export default Feed;
+

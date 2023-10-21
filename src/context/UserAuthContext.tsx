@@ -1,15 +1,15 @@
-import React, { createContext, useContext, ReactNode, useState, useEffect, Dispatch, SetStateAction } from "react";
+import React, {createContext, Dispatch, ReactNode, SetStateAction, useContext, useEffect, useState} from "react";
 import {
     createUserWithEmailAndPassword,
-    UserCredential,
-    onAuthStateChanged,
-    User,
-    signOut,
-    signInWithEmailAndPassword,
     GoogleAuthProvider,
-    signInWithPopup
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    signInWithPopup,
+    signOut,
+    User,
+    UserCredential
 } from "firebase/auth";
-import { auth } from "../firebase/firebase";
+import {auth} from "../firebase/firebase";
 
 interface UserAuthContextProviderProps {
     children: ReactNode;
@@ -27,7 +27,7 @@ interface UserAuthContextValue {
     setIsAuth: Dispatch<SetStateAction<boolean>>;
     profileData: UserProfile | null
     setProfileData: Dispatch<SetStateAction<UserProfile | null>>;
-    profileId : number | undefined
+    profileId: number | undefined
     setProfileId: Dispatch<SetStateAction<number | undefined>>;
 }
 
@@ -45,7 +45,7 @@ interface UserProfile {
     displayName: string
 }
 
-export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = ({ children }) => {
+export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = ({children}) => {
     const [user, setUser] = useState<User | null>(null);
     const [selectedPost, setSelectedPost] = useState<string | null>(null);
     const [isAuth, setIsAuth] = useState(localStorage.getItem("isAuth") === "true");

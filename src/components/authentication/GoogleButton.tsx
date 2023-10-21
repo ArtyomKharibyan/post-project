@@ -20,11 +20,8 @@ const GoogleButton = ({additionalClassName = '', isSignUp = false}: Props) => {
         try {
             const userCredential: UserCredential = await googleSignIn();
 
-            console.log(userCredential, "HELLO WOOOOORLD")
-
             if (userCredential?.user) {
                 await storeTokenInLocalStorage(userCredential);
-                console.log(userCredential?.user)
 
                 const fullName = userCredential.user.displayName || "";
                 const wordsArray = fullName.split(" ");

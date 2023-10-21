@@ -82,8 +82,18 @@ const Guest = () => {
                     .map((post, index,) => (
                         <div className="p-3 rounded-2xl bg-purple-200 border border-black" key={index}>
                             <div>
-                                {post?.imageUrl && (
-                                    <img src={post.imageUrl} alt="" className="w-full h-96 object-cover"/>
+                                {post?.imageUrl ? (
+                                    <img
+                                        src={post.imageUrl}
+                                        alt=""
+                                        className="w-full h-96 object-cover"
+                                    />
+                                ) : (
+                                    <img
+                                        src="https://firebasestorage.googleapis.com/v0/b/post-project-80c0a.appspot.com/o/images%2FNo-Image-Placeholder.svg.png?alt=media&token=3cbf17a7-c089-494a-b2ab-feeeac5fa57c"
+                                        alt="No Image"
+                                        className="w-full h-96 object-cover"
+                                    />
                                 )}
                             </div>
                             <>

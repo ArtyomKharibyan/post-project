@@ -12,14 +12,14 @@ interface EditPostProps {
 }
 
 const EditPost: React.FC<EditPostProps> = ({
-    editingPost,
-    setEditingPost,
-    tempImageUrl,
-    isUploading,
-    handleImageChange,
-    handleSubmitEdit,
-    editCancel,
-}) => {
+                                               editingPost,
+                                               setEditingPost,
+                                               tempImageUrl,
+                                               isUploading,
+                                               handleImageChange,
+                                               handleSubmitEdit,
+                                               editCancel,
+                                           }) => {
 
     return (
         <div>

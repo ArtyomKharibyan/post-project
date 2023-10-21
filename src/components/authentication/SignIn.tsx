@@ -15,7 +15,6 @@ const SignIn = () => {
     const handleClick = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault();
         setError("");
-        console.log("Hello World")
         try {
             if (signIn) {
                 await signIn(email, password);

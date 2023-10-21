@@ -11,18 +11,18 @@ import Guest from "../components/pages/Guest";
 
 const Router = () => {
 
-        return (
+    return (
         <Routes>
-                <Route path="/" element={<SignUp/>}/>
-                <Route path="/signUp" element={<SignUp/>}/>
-                <Route path="/signIn" element={<SignIn/>}/>
-                <Route path="/posts" element=<CreatePost/>/>
-                <Route path="/feed" element={<Feed/>}/>
-                <Route path="/guest" element={<Guest/>}/>
-                <Route path="*" element={<NotFoundPage/>}/>
-                <Route path="/profile" element={<ProtectedRoute><App/></ProtectedRoute>}/>
+            <Route path="/" element={<SignUp/>}/>
+            <Route path="/signUp" element={<SignUp/>}/>
+            <Route path="/signIn" element={<SignIn/>}/>
+            <Route path="/posts" element=<CreatePost/>/>
+            <Route path="/feed" element={<Feed/>}/>
+            <Route path="/guest" element={<Guest/>}/>
+            <Route path="*" element={<NotFoundPage/>}/>
+            <Route path="/profile" element={<ProtectedRoute><App/></ProtectedRoute>}/>
         </Routes>
-)
+    )
 }
 
 export default Router

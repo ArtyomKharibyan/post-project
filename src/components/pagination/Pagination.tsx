@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 
 const useInfiniteScroll = (callback: (page: number) => void) => {
     const [currentPage, setCurrentPage] = useState(1);
