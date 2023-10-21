@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ReactComponent as OwoSVG } from "../images/Owl.svg";
 import "../../index.css";
 import { UserAuth } from "../../context/UserAuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "../server/axios";
 import { Api_Url } from "../server/config";
 import Loading from "../images/Loading.gif";
@@ -10,8 +10,14 @@ import Loading from "../images/Loading.gif";
 const Header = () => {
     const { logOut, setIsAuth, isAuth, profileData, setProfileData } = UserAuth();
     const [isLoading, setIsLoading] = useState(true);
-
+    const location = useLocation();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!isAuth && (location.pathname === "/profile" || location.pathname === "/posts" || location.pathname === "/feed" )) {
+            navigate("/guest");
+        }
+    }, [isAuth, navigate, location]);
 
     const handleLogOut = async () => {
         try {
@@ -50,7 +56,7 @@ const Header = () => {
             }
         };
 
-            fetchData();
+        fetchData();
 
         return () => {
             isMounted = false;
@@ -100,7 +106,7 @@ const Header = () => {
                         ) : null}
                         {!isAuth && (
                             <>
-                                <Link to="/feed" className="p-2 text-sm font-semibold">
+                                <Link to="/guest" className="p-2 text-sm font-semibold">
                                     Feed
                                 </Link>
                                 <Link to="/signUp" className="p-2 text-sm font-semibold">

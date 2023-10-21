@@ -82,7 +82,7 @@ const SignIn = () => {
                             <div className="bg-gray-300 h-px w-full" />
                         </div>
 
-                        <GoogleButton additionalClassName="bg-slate-300 text-slate-300" />
+                        <GoogleButton additionalClassName="w-full bg-blue-500 flex text-center items-center justify-center h-12 rounded-md shadow-md relative cursor-pointer transition duration-300 ease-in-out" />
                     </div>
                     <div>
                         Don&rsquo;t have an account? <Link className="text-sky-500" to="/signUp">Sign Up</Link>

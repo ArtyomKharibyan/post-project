@@ -1,10 +1,8 @@
 import React, {useCallback, useEffect, useState} from "react";
 import {getDownloadURL, ref, uploadBytes,} from "firebase/storage";
-import {onAuthStateChanged} from 'firebase/auth';
-import {auth, storage} from "../../firebase/firebase";
+import {storage} from "../../firebase/firebase";
 import {useNavigate} from "react-router-dom";
 import Header from "./Header";
-import firebase from "firebase/compat";
 import axios from "../server/axios";
 import {UserAuth} from "../../context/UserAuthContext";
 import {Api_Url} from "../server/config"
@@ -31,18 +29,10 @@ interface Comment {
     userSurname?: string;
 }
 
-
-interface UserData {
-    username: string;
-}
-
-type AuthStateChangedCallback = (user: firebase.User | null) => void;
-
 const Modal: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
     const [title, setTitle] = useState<string>("");
     const [postText, setPostText] = useState<string>("");
-    const [user, setUser] = useState<UserData | null>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [postData, setPostData] = useState<Post[]>([]);
     const [editingPost, setEditingPost] = useState<Post | null>(null);
@@ -155,27 +145,6 @@ const Modal: React.FC = () => {
         }
     }, [editingPost]);
 
-
-    const authStateChanged: AuthStateChangedCallback = (user) => {
-        if (user) {
-            const userData: UserData = {
-                username: user.displayName || "",
-            };
-            setUser(userData);
-            console.log(user)
-        } else {
-            setUser(null);
-        }
-    };
-
-    useEffect(() => {
-        // @ts-ignore
-        const unsubscribe = onAuthStateChanged(auth, authStateChanged);
-        return () => {
-            unsubscribe();
-        };
-    }, []);
-
     const handleChooseFile = () => {
         if (fileInputRef.current) {
             fileInputRef.current.click();
@@ -201,11 +170,15 @@ const Modal: React.FC = () => {
 
                 setTempImageUrl(url);
                 setImageUrl(url);
-                // @ts-ignore
-                setEditingPost((prevEditingPost) => ({
-                    ...prevEditingPost,
-                    imageUrl: url,
-                }));
+                setEditingPost((prevEditingPost) => {
+                    if (prevEditingPost) {
+                        return {
+                            ...prevEditingPost,
+                            imageUrl: url,
+                        };
+                    }
+                    return prevEditingPost;
+                });
             } catch (error) {
                 console.error("Error uploading file:", error);
             } finally {
@@ -253,8 +226,6 @@ const Modal: React.FC = () => {
         setEditingPost(postToEdit);
     };
 
-    console.log(user)
-
     const resetForm = () => {
         setTitle("");
         setPostText("");
@@ -276,15 +247,14 @@ const Modal: React.FC = () => {
                 imageUrl: editedImageUrl || null,
             });
 
-            // @ts-ignore
             setPostData((prevPostData) =>
                 prevPostData.map((post) =>
                     post.id === editingPost.id
                         ? {
-                            ...post,
+                    ...post,
                             title: title,
                             postText: postText,
-                            imageUrl: editedImageUrl,
+                            imageUrl: editedImageUrl || "",
                         }
                         : post
                 )

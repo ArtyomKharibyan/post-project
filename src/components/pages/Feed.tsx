@@ -3,6 +3,7 @@ import axios from "../server/axios";
 import Header from "./Header";
 import { UserAuth } from "../../context/UserAuthContext";
 import {Api_Url} from "../server/config";
+import useInfiniteScroll from "../pagination/Pagination";
 
 interface PostWithLoading {
     name: string;
@@ -73,24 +74,7 @@ const Feed: React.FC = () => {
         getPosts(currentPage);
     }, [currentPage]);
 
-    const handleScroll = () => {
-        const windowHeight = window.innerHeight;
-        const documentHeight = document.documentElement.scrollHeight;
-        const scrollTop = window.scrollY || document.documentElement.scrollTop;
-
-        if (windowHeight + scrollTop >= documentHeight - 200) {
-            setCurrentPage((prevPage) => prevPage + 1);
-        }
-    };
-
-    useEffect(() => {
-        window.addEventListener("scroll", handleScroll);
-
-        return () => {
-            window.removeEventListener("scroll", handleScroll);
-        };
-    }, []);
-
+    useInfiniteScroll(setCurrentPage);
 
     const handleCommentChange = useCallback(
         (postId: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,7 +143,7 @@ const Feed: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
                 {postList
                     .map((post, index, ) => (
-                        <div className="p-3 rounded-2xl bg-purple-200 border border-black" key={index}>
+                        <div className="p-3 rounded-2xl bg-purple-200" key={index}>
                             <div>
                                 {post?.imageUrl && (
                                     <img

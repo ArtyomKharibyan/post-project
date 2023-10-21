@@ -3,7 +3,6 @@ import {Link, useNavigate} from "react-router-dom";
 import {UserAuth} from "../../context/UserAuthContext";
 import axios from '../server/axios';
 import {updateProfile, UserCredential} from "firebase/auth";
-import GoogleButton from "./GoogleButton"
 import {Api_Url} from "../server/config";
 import {storeTokenInLocalStorage} from "../../token/token";
 
@@ -89,12 +88,11 @@ const SignUp: React.FC = () => {
         <div className="flex justify-center items-center min-h-screen w-full">
             <div className="w-96 h-600 p-5 relative border-2 border-right/50 text-center rounded-xl block bg-slate-100">
                 <p className="font-brush-script text-4xl p-5">WebLab</p>
+                <p className="text-red-700">{error}</p>
                 <div className="grid grid-rows-[80px]">
-                    <GoogleButton additionalClassName="bg-blue-500" isSignUp={true} />
-                    <p className="text-red-700">{error}</p>
                     <div className="flex justify-center items-center text-center">
                         <div className="bg-gray-300 h-px w-full"/>
-                        <p className="text-gray-500 p-3">OR</p>
+                        <p className="text-gray-500 p-3">welcome</p>
                         <div className="bg-gray-300 h-px w-full"/>
                     </div>
 
@@ -123,7 +121,7 @@ const SignUp: React.FC = () => {
                     <div>
                         Already have an account? <Link className="text-sky-500" to="/SignIn">Sign In</Link>
                         <br/>
-                        Login as <Link className="text-sky-500" to={"/feed"}>Guest</Link>
+                        Login as <Link className="text-sky-500" to={"/guest"}>Guest</Link>
                     </div>
                 </div>
             </div>

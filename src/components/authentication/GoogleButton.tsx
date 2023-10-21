@@ -18,8 +18,6 @@ const GoogleButton = ({additionalClassName = '', isSignUp = false}: Props) => {
 
     const handleGoogleSignIn = async () => {
         try {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
             const userCredential: UserCredential = await googleSignIn();
 
             console.log(userCredential, "HELLO WOOOOORLD")
@@ -40,11 +38,6 @@ const GoogleButton = ({additionalClassName = '', isSignUp = false}: Props) => {
                     surname: surname,
                     email: email,
                 };
-
-                console.log(name)
-                console.log(surname)
-                console.log(email)
-                console.log(userData, "User Dataaaaaaaaaaaaaaaaaaaaaa")
 
                 if (isSignUp) {
                     await axios.post(`${Api_Url}/profile`, userData);
