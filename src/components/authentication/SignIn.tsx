@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { UserAuth } from "../../context/UserAuthContext";
+import React, {useEffect, useState} from "react";
+import {Link, useNavigate} from "react-router-dom";
+import {UserAuth} from "../../context/UserAuthContext";
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import GoogleButton from "./GoogleButton";
@@ -10,7 +10,7 @@ const SignIn = () => {
     const [password, setPassword] = useState<string>("");
     const [error, setError] = useState<string>("");
     const navigate = useNavigate();
-    const { signIn } = UserAuth();
+    const {signIn} = UserAuth();
 
     const handleClick = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault();
@@ -77,12 +77,13 @@ const SignIn = () => {
                         </button>
 
                         <div className="flex justify-center items-center text-center p-4">
-                            <div className="bg-gray-300 h-px w-full" />
+                            <div className="bg-gray-300 h-px w-full"/>
                             <p className="text-gray-500 p-3">OR</p>
-                            <div className="bg-gray-300 h-px w-full" />
+                            <div className="bg-gray-300 h-px w-full"/>
                         </div>
 
-                        <GoogleButton additionalClassName="w-full bg-blue-500 flex text-center items-center justify-center h-12 rounded-md shadow-md relative cursor-pointer transition duration-300 ease-in-out" />
+                        <GoogleButton
+                            additionalClassName="w-full bg-blue-500 flex text-center items-center justify-center h-12 rounded-md shadow-md relative cursor-pointer transition duration-300 ease-in-out"/>
                     </div>
                     <div>
                         Don&rsquo;t have an account? <Link className="text-sky-500" to="/signUp">Sign Up</Link>
