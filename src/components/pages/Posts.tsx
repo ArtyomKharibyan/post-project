@@ -1,8 +1,7 @@
-import React, {useCallback, useEffect, useState} from "react";
+import React, {ChangeEvent, useCallback, useEffect, useState} from "react";
 import {getDownloadURL, ref, uploadBytes,} from "firebase/storage";
 import {storage} from "../../firebase/firebase";
 import {useNavigate} from "react-router-dom";
-import Header from "./Header";
 import axios from "../server/axios";
 import {UserAuth} from "../../context/UserAuthContext";
 import {Api_Url} from "../server/config"
@@ -38,7 +37,6 @@ const Modal: React.FC = () => {
     const [editingPost, setEditingPost] = useState<Post | null>(null);
     const [editedImageUrl, setEditedImageUrl] = useState<string | null>(editingPost?.imageUrl || null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [isUploading, setIsUploading] = useState(false);
     const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
     const [showNotification, setShowNotification] = useState(false);
 
@@ -90,7 +88,6 @@ const Modal: React.FC = () => {
         try {
             if (profileId) {
                 const response = await axios.get(`${Api_Url}/post/${profileId}?page=${currentPage}`);
-                // let sortedPosts = response.data.sort((a: { id: number; }, b: { id: number; }) => b.id - a.id);
                 if (isFetch) {
                     setPostData(prevState => [...prevState, ...response.data]);
                 } else {
@@ -159,39 +156,10 @@ const Modal: React.FC = () => {
 
     const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
-    const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            try {
-                setIsUploading(true);
-                const imageRef = ref(storage, `images/${file.name}`);
-                await uploadBytes(imageRef, file);
-                const url = await getDownloadURL(imageRef);
-
-                setTempImageUrl(url);
-                setImageUrl(url);
-                setEditingPost((prevEditingPost) => {
-                    if (prevEditingPost) {
-                        return {
-                            ...prevEditingPost,
-                            imageUrl: url,
-                        };
-                    }
-                    return prevEditingPost;
-                });
-            } catch (error) {
-                console.error("Error uploading file:", error);
-            } finally {
-                setIsUploading(false);
-            }
-        }
-    };
-
     const handleImageCreatePost = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             try {
-                setIsUploading(true);
                 const imageRef = ref(storage, `images/${file.name}`);
                 await uploadBytes(imageRef, file);
                 const url = await getDownloadURL(imageRef);
@@ -200,8 +168,6 @@ const Modal: React.FC = () => {
 
             } catch (error) {
                 console.error("Error uploading file:", error);
-            } finally {
-                setIsUploading(false);
             }
         }
     };
@@ -276,7 +242,6 @@ const Modal: React.FC = () => {
 
     return (
         <div>
-            <Header/>
             <div>
                 <div className="flex justify-center items-center">
                     <button
@@ -375,6 +340,11 @@ const Modal: React.FC = () => {
                                         />
                                     </div>
                                     <div className="w-full max-h-[300px] overflow-y-auto">
+                                        <form onSubmit={(e) => {
+                                            e.preventDefault();
+                                            handleImageCreatePost(e as unknown as ChangeEvent<HTMLInputElement>);
+                                            handleSubmitEdit();
+                                        }}>
                                         <input
                                             className="overflow-x-hidden flex justify-center items-center overflow-y-auto"
                                             type="file"
@@ -383,6 +353,7 @@ const Modal: React.FC = () => {
                                             onChange={handleImageCreatePost}
                                             style={{display: "none"}}
                                         />
+                                        </form>
                                         {imageUrl && (
                                             <div className="relative">
                                                 <img
@@ -445,8 +416,8 @@ const Modal: React.FC = () => {
                     </div>
                 </div>
             )}
-            <EditPost editingPost={editingPost} isUploading={isUploading} tempImageUrl={tempImageUrl}
-                      handleImageChange={handleImageChange} handleSubmitEdit={handleSubmitEdit}
+            <EditPost editingPost={editingPost} tempImageUrl={tempImageUrl}
+                      handleSubmitEdit={handleSubmitEdit} setImageUrl={setImageUrl} setTempImageUrl={setTempImageUrl}
                       setEditingPost={setEditingPost} editCancel={editCancel}/>
             <Notification show={showNotification} />
         </div>

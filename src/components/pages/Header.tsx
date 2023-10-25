@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { ReactComponent as OwoSVG } from "../images/Owl.svg";
-import "../../index.css";
+import "../../index.css"
 import { UserAuth } from "../../context/UserAuthContext";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "../server/axios";
 import { Api_Url } from "../server/config";
 import Loading from "../images/Loading.gif";
+import { getAuth } from "firebase/auth";
+import DarkMode from "../darkMode/DarkMode";
 
 const Header = () => {
-    const { logOut, setIsAuth, isAuth, setProfileData } = UserAuth();
+    const { logOut, setIsAuth, isAuth, setProfileData} = UserAuth();
     const [isLoading, setIsLoading] = useState(true);
     const location = useLocation();
     const navigate = useNavigate();
+    const auth = getAuth();
 
     useEffect(() => {
         if (!isAuth && (location.pathname === "/profile" || location.pathname === "/posts" || location.pathname === "/feed" )) {
@@ -22,45 +25,38 @@ const Header = () => {
     const handleLogOut = async () => {
         try {
             localStorage.removeItem("token");
+            localStorage.setItem("selectedTheme", "light");
+            document?.querySelector("body")?.setAttribute("data-theme", "light");
             await logOut();
             navigate("/signIn");
             setIsAuth(false);
         } catch (e) {
             if (e instanceof Error) {
-                console.log(e.message);
+                console.error(e.message);
             }
         }
     };
 
     useEffect(() => {
-        let isMounted = true;
-
         const fetchData = async () => {
             try {
                 const response = await axios.get(`${Api_Url}/profile`);
-                if (isMounted && response.status === 200) {
+                if (response.status === 200) {
                     const data = response.data;
                     setProfileData(data);
-                } else if (isMounted) {
+                } else  {
                     console.error("Error fetching profile data:", response.statusText);
                 }
             } catch (error) {
-                if (isMounted) {
                     console.error("Network error:", error);
-                }
             } finally {
-                if (isMounted) {
                     setIsLoading(false);
-                }
             }
         };
 
         fetchData();
 
-        return () => {
-            isMounted = false;
-        };
-    }, [setProfileData]);
+    }, [setProfileData, auth]);
 
     if (isLoading) {
         return (
@@ -71,16 +67,12 @@ const Header = () => {
     }
 
     return (
-        <div className="flex w-full border-b-2 border-black items-center h-70">
-            {isAuth ? (
+        <div className="flex w-full border-b border-black items-center h-70">
                 <Link to="/profile">
-                    <OwoSVG className="h-12 w-24" />
+                        <div className="icon heart group relative">
+                            <OwoSVG className="h-12 w-24 transition duration-300 ease-in-out transform origin-center group-hover:animate-bounce fill-current text-white" />
+                        </div>
                 </Link>
-            ) : (
-                <Link to="/signUp">
-                    <OwoSVG className="h-12 w-24" />
-                </Link>
-            )}
             <Link to={isAuth ? "/profile" : "/signUp"} className="text-lg font-brush-script text-slate-100">
                 WebLab
             </Link>
@@ -89,6 +81,7 @@ const Header = () => {
                     <div className="flex justify-end p-2 w-full text-center items-center text-slate-100">
                         {isAuth ? (
                             <>
+                                <DarkMode />
                                 <Link to="/posts" className="p-2 text-sm font-semibold">
                                     Posts
                                 </Link>

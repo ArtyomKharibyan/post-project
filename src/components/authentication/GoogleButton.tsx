@@ -38,8 +38,6 @@ const GoogleButton = ({additionalClassName = '', isSignUp = false}: Props) => {
 
                 if (isSignUp) {
                     await axios.post(`${Api_Url}/profile`, userData);
-                } else {
-                    console.log("No!")
                 }
 
                 navigate("/profile");

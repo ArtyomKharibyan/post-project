@@ -1,12 +1,14 @@
-import React from "react"
+import React, {ChangeEvent, useState} from "react"
 import {Post as PostType} from "../pages/Posts"
+import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
+import {storage} from "../../firebase/firebase";
 
 interface EditPostProps {
     editingPost: PostType | null;
     setEditingPost: React.Dispatch<React.SetStateAction<PostType | null>>;
     tempImageUrl: string | null;
-    isUploading: boolean;
-    handleImageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    setTempImageUrl: React.Dispatch<React.SetStateAction<string | null>>;
+    setImageUrl: React.Dispatch<React.SetStateAction<string | null>>;
     handleSubmitEdit: () => void;
     editCancel: () => void,
 }
@@ -15,11 +17,41 @@ const EditPost: React.FC<EditPostProps> = ({
                                                editingPost,
                                                setEditingPost,
                                                tempImageUrl,
-                                               isUploading,
-                                               handleImageChange,
+                                               setTempImageUrl,
+                                               setImageUrl,
                                                handleSubmitEdit,
                                                editCancel,
                                            }) => {
+
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            try {
+                setIsUploading(true);
+                const imageRef = ref(storage, `images/${file.name}`);
+                await uploadBytes(imageRef, file);
+                const url = await getDownloadURL(imageRef);
+
+                setTempImageUrl(url);
+                setImageUrl(url);
+                setEditingPost((prevEditingPost) => {
+                    if (prevEditingPost) {
+                        return {
+                            ...prevEditingPost,
+                            imageUrl: url,
+                        };
+                    }
+                    return prevEditingPost;
+                });
+            } catch (error) {
+                console.error("Error uploading file:", error);
+            } finally {
+                setIsUploading(false);
+            }
+        }
+    };
 
     return (
         <div>
@@ -43,6 +75,11 @@ const EditPost: React.FC<EditPostProps> = ({
                                 )}
                                 {isUploading && <p>Uploading...</p>}
                                 <div className="flex flex-col items-center">
+                                    <form onSubmit={(e) => {
+                                        e.preventDefault();
+                                        handleImageChange(e as unknown as ChangeEvent<HTMLInputElement>);
+                                        handleSubmitEdit();
+                                    }}>
                                     <input
                                         type="file"
                                         id="file-input"
@@ -56,6 +93,7 @@ const EditPost: React.FC<EditPostProps> = ({
                                     >
                                         Select a File
                                     </label>
+                                    </form>
                                 </div>
 
                                 <textarea

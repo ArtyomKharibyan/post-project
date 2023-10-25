@@ -1,9 +1,10 @@
 import React, {useCallback, useEffect, useState} from "react";
 import axios from "../server/axios";
-import Header from "./Header";
 import {UserAuth} from "../../context/UserAuthContext";
 import {Api_Url} from "../server/config";
 import useInfiniteScroll from "../pagination/Pagination";
+import { format } from "date-fns";
+import { parseISO } from "date-fns";
 
 interface PostWithLoading {
     name: string;
@@ -23,7 +24,7 @@ interface Comment {
     text: string;
     userName: string;
     userSurname: string;
-    timestamp: number;
+    created_at: string;
 }
 
 const Feed: React.FC = () => {
@@ -70,16 +71,13 @@ const Feed: React.FC = () => {
         }
     };
 
-
     useEffect(() => {
         getPosts(currentPage);
     }, [currentPage]);
 
-    const formatDate = (timestamp: number) => {
-        const date = new Date(timestamp);
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${hours}:${minutes}`;
+    const formatDate = (created_at: string) => {
+        const parsedDate = parseISO(created_at);
+        return format(parsedDate, "HH:mm");
     };
 
     useInfiniteScroll(setCurrentPage);
@@ -105,7 +103,7 @@ const Feed: React.FC = () => {
                 id: "",
                 userName: currentUserName,
                 userSurname: currentUserSurname,
-                timestamp: Date.now(),
+                created_at: new Date().toISOString()
             };
 
             setPostList((prevPostList) =>
@@ -116,7 +114,7 @@ const Feed: React.FC = () => {
 
             setVisibleCommentsCounts((prevVisibleCommentsCounts) => ({
                 ...prevVisibleCommentsCounts,
-                [postId]: (prevVisibleCommentsCounts[postId] || 0) + 1, // Increment the count to show newly added comment
+                [postId]: (prevVisibleCommentsCounts[postId] || 0) + 1,
             }));
 
             const response = await axios.post(`${Api_Url}/comment`, {
@@ -125,7 +123,7 @@ const Feed: React.FC = () => {
                 postId: postId,
                 userName: newComment.userName,
                 userSurname: newComment.userSurname,
-                timestamp: newComment.timestamp
+                created_at: newComment.created_at
             });
 
             if (response.data.id) {
@@ -140,6 +138,7 @@ const Feed: React.FC = () => {
                 ...prevCommentTexts,
                 [postId]: "",
             }));
+
         } catch (error) {
             console.error("Error submitting comment:", error);
         } finally {
@@ -149,11 +148,10 @@ const Feed: React.FC = () => {
 
     return (
         <div>
-            <Header/>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
                 {postList
                     .map((post, index,) => (
-                        <div className="p-3 rounded-2xl bg-purple-200 border border-black" key={index}>
+                        <div className="p-3 rounded-2xl bg-purple-200" key={index}>
                             <div>
                                 {post?.imageUrl ? (
                                     <img
@@ -205,7 +203,7 @@ const Feed: React.FC = () => {
                                                 <strong>User: {`${comment?.userName} ${comment?.userSurname}`}</strong>
                                                 <br/>
                                                 <div className = "flex break-all flex-row	justify-between"> {comment.text}<span
-                                                    className="flex justify-end text-xs text-current	">{formatDate(comment.timestamp)}</span>
+                                                    className="flex justify-end text-xs text-current">{formatDate(comment.created_at)}</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -236,4 +234,3 @@ const Feed: React.FC = () => {
 };
 
 export default Feed;
-

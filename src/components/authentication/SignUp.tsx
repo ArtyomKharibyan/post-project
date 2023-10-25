@@ -121,7 +121,7 @@ const SignUp: React.FC = () => {
                     </div>
 
                     <div>
-                        Already have an account? <Link className="text-sky-500" to="/SignIn">Sign In</Link>
+                        Already have an account? <Link className="text-sky-500" to="/signIn">Sign In</Link>
                         <br/>
                         Login as <Link className="text-sky-500" to={"/guest"}>Guest</Link>
                     </div>

@@ -59,14 +59,12 @@ export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = (
 
         try {
             const result = await signInWithPopup(auth, provider);
-            console.log("Logged In", result);
             return result;
         } catch (error) {
             console.error("Error signing in with Google:", error);
             throw error;
         }
     };
-
 
     const createUser = async (email: string, password: string) => {
         setIsAuth(true)

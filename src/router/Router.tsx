@@ -4,14 +4,22 @@ import SignUp from "../components/authentication/SignUp";
 import SignIn from "../components/authentication/SignIn";
 import App from "../App";
 import ProtectedRoute from "./ProtectedRoute";
+import {useLocation} from "react-router";
 import CreatePost from "../components/pages/Posts";
 import Feed from "../components/pages/Feed";
 import NotFoundPage from "../components/notFound/NotFoundPage";
 import Guest from "../components/pages/Guest";
+import Header from "../components/pages/Header";
 
 const Router = () => {
 
+    const location = useLocation();
+    const isHeaderVisible = !["/signIn", "/signUp"].includes(location.pathname);
+
+
     return (
+        <>
+            {isHeaderVisible && <Header />}
         <Routes>
             <Route path="/" element={<SignUp/>}/>
             <Route path="/signUp" element={<SignUp/>}/>
@@ -22,6 +30,7 @@ const Router = () => {
             <Route path="*" element={<NotFoundPage/>}/>
             <Route path="/profile" element={<ProtectedRoute><App/></ProtectedRoute>}/>
         </Routes>
+        </>
     )
 }
 
