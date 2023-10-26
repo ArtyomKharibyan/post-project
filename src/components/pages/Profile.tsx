@@ -10,6 +10,7 @@ const Profile = () => {
     const { user, profileData, setProfileData } = UserAuth();
     const [avatarURL, setAvatarURL] = useState(profileData?.avatarUrl ?? defaultAvatarURL);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [loading, setLoading] = useState(true);
 
     const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -36,12 +37,19 @@ const Profile = () => {
     };
 
     useEffect(() => {
-        if (profileData?.avatarUrl) {
-            setAvatarURL(profileData.avatarUrl);
-        } else {
-            setAvatarURL(defaultAvatarURL);
+        if (profileData) {
+            if (profileData?.avatarUrl) {
+                setAvatarURL(profileData.avatarUrl);
+            } else {
+                setAvatarURL(defaultAvatarURL);
+            }
+            setLoading(false);
         }
-    }, [profileData]);
+    }, [profileData, setProfileData]);
+
+    if (loading) {
+        return <div> </div>;
+    }
 
     const handleButtonClick = () => {
         fileInputRef?.current?.click();

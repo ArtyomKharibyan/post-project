@@ -4,9 +4,9 @@ import {
     GoogleAuthProvider,
     onAuthStateChanged,
     signInWithEmailAndPassword,
-    signInWithPopup,
     signOut,
     User,
+    signInWithPopup,
     UserCredential
 } from "firebase/auth";
 import {auth} from "../firebase/firebase";

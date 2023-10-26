@@ -102,7 +102,6 @@ const Modal: React.FC = () => {
         setCurrentPage(1)
     }, [profileId])
 
-
     useEffect(() => {
         (async () => {
             if (currentPage === 1) {
@@ -187,7 +186,6 @@ const Modal: React.FC = () => {
         }
     };
 
-
     const handleEditPost = (postToEdit: Post): void => {
         setEditingPost(postToEdit);
     };
@@ -259,14 +257,14 @@ const Modal: React.FC = () => {
                             postData.map((post, index) => (
                                     <div
                                         key={index}
-                                        className=" w-full bg-purple-200 border border-slate-800 my-4 rounded-3xl"
+                                        className=" w-full bg-purple-200 border border-slate-300 my-4 rounded-3xl"
                                     >
                                         <div className="min-w-2xl">
                                             {post.imageUrl?.length > 0 && (
                                                 <img
                                                     src={post.imageUrl}
                                                     alt=""
-                                                    className="w-full rounded-tl-3xl rounded-tr-3xl h-96 object-cover"
+                                                    className="w-full rounded-tl-3xl rounded-tr-3xl h-full object-cover"
                                                 />
                                             )}
 
@@ -279,7 +277,7 @@ const Modal: React.FC = () => {
                                                 <div className="mt-4">
                                                     {post.comment && post.comment.length > 0 && (
                                                         <div className="text-left text-gray-600 mb-2">
-                                                            <h3 className="font-semibold text-slate-600 border-b border-solid border-zinc-900 rounded-sm w-full text-xl p-2 mb-2">Comments:</h3>
+                                                            <h3 className="font-semibold text-slate-600 border-b border-solid border-zinc-700 rounded-sm w-full text-xl p-2 mb-2">Comments:</h3>
                                                             {post.comment.map((comment, index) => (
                                                                 <div key={index} className="p-2">
                                                                     <div
@@ -350,14 +348,18 @@ const Modal: React.FC = () => {
                                             type="file"
                                             ref={fileInputRef}
                                             key={imageUrl || undefined}
-                                            onChange={handleImageCreatePost}
+                                            onChange={(event) => {
+                                                if (event?.target?.files?.[0]) {
+                                                    handleImageCreatePost(event);
+                                                }
+                                            }}
                                             style={{display: "none"}}
                                         />
                                         </form>
                                         {imageUrl && (
                                             <div className="relative">
                                                 <img
-                                                    className="w-full h-auto"
+                                                    className="w-full h-full"
                                                     src={imageUrl}
                                                     alt="Selected"
                                                 />
@@ -418,9 +420,10 @@ const Modal: React.FC = () => {
             )}
             <EditPost editingPost={editingPost} tempImageUrl={tempImageUrl}
                       handleSubmitEdit={handleSubmitEdit} setImageUrl={setImageUrl} setTempImageUrl={setTempImageUrl}
-                      setEditingPost={setEditingPost} editCancel={editCancel}/>
+                      setEditingPost={setEditingPost} editCancel={editCancel} imageUrl={imageUrl}/>
             <Notification show={showNotification} />
         </div>
     );
 };
+
 export default Modal

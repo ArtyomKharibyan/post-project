@@ -1,6 +1,6 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { UserAuth } from "../../context/UserAuthContext";
+import React, {useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {UserAuth} from "../../context/UserAuthContext";
 import "firebase/compat/auth";
 import {UserCredential} from "firebase/auth";
 import {storeTokenInLocalStorage} from "../../token/token";
@@ -9,12 +9,18 @@ import {Api_Url} from "../server/config";
 
 type Props = {
     additionalClassName?: string;
-    isSignUp?: boolean;
+    isSignUp: boolean
 }
 
-const GoogleButton = ({additionalClassName = '', isSignUp = false}: Props) => {
+const GoogleButton = ({additionalClassName = ''}: Props) => {
     const navigate = useNavigate();
-    const { googleSignIn } = UserAuth();
+    const {googleSignIn} = UserAuth();
+    const [userData, setUserData] = useState<{ name: string; surname: string; email: string }>({
+        name: "",
+        surname: "",
+        email: ""
+    });
+    const [isSignUp, setIsSignUp] = useState(false)
 
     const handleGoogleSignIn = async () => {
         try {
@@ -27,14 +33,11 @@ const GoogleButton = ({additionalClassName = '', isSignUp = false}: Props) => {
                 const wordsArray = fullName.split(" ");
                 const name = wordsArray[0] || "";
                 const surname = wordsArray.slice(1).join(" ") || "";
-
                 const email = userCredential.user.email || "";
 
-                const userData = {
-                    name: name,
-                    surname: surname,
-                    email: email,
-                };
+                setUserData({name, surname, email});
+
+                setIsSignUp(true)
 
                 if (isSignUp) {
                     await axios.post(`${Api_Url}/profile`, userData);
@@ -45,7 +48,7 @@ const GoogleButton = ({additionalClassName = '', isSignUp = false}: Props) => {
         } catch (error) {
             console.error(error);
         }
-    }
+    };
 
     return (
         <div className="p-5">

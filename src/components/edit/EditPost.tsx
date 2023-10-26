@@ -11,6 +11,7 @@ interface EditPostProps {
     setImageUrl: React.Dispatch<React.SetStateAction<string | null>>;
     handleSubmitEdit: () => void;
     editCancel: () => void,
+    imageUrl: string | null;
 }
 
 const EditPost: React.FC<EditPostProps> = ({
@@ -36,6 +37,7 @@ const EditPost: React.FC<EditPostProps> = ({
 
                 setTempImageUrl(url);
                 setImageUrl(url);
+
                 setEditingPost((prevEditingPost) => {
                     if (prevEditingPost) {
                         return {
@@ -78,21 +80,28 @@ const EditPost: React.FC<EditPostProps> = ({
                                     <form onSubmit={(e) => {
                                         e.preventDefault();
                                         handleImageChange(e as unknown as ChangeEvent<HTMLInputElement>);
-                                        handleSubmitEdit();
+                                        handleSubmitEdit()
                                     }}>
-                                    <input
-                                        type="file"
-                                        id="file-input"
-                                        name="file-input"
-                                        className="hidden"
-                                        onChange={handleImageChange}
-                                    />
-                                    <label
-                                        htmlFor="file-input"
-                                        className="bg-blue-500 text-white rounded-md py-2 px-4 cursor-pointer hover:bg-blue-700 transition duration-300 ease-in-out"
-                                    >
-                                        Select a File
-                                    </label>
+
+                                        <input
+                                            type="file"
+                                            id="file-input"
+                                            name="file-input"
+                                            className="hidden"
+                                            onChange={(event) => {
+                                                if (event?.target?.files?.[0]) {
+                                                    handleImageChange(event);
+                                                }
+                                            }}
+                                        />
+
+                                        <label
+                                            htmlFor="file-input"
+                                            className="bg-blue-500 text-white rounded-md py-2 px-4 cursor-pointer hover:bg-blue-700 transition duration-300 ease-in-out"
+                                        >
+                                            Select a File
+                                        </label>
+
                                     </form>
                                 </div>
 
@@ -104,7 +113,6 @@ const EditPost: React.FC<EditPostProps> = ({
                                         setEditingPost({...editingPost, postText: e.target.value})
                                     }
                                 />
-
                             </div>
                         </div>
 

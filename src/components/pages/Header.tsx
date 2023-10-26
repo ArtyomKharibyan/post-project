@@ -67,7 +67,7 @@ const Header = () => {
     }
 
     return (
-        <div className="flex w-full border-b border-black items-center h-70">
+        <div className="flex w-full border-b border-slate-300 items-center h-70">
                 <Link to="/profile">
                         <div className="icon heart group relative">
                             <OwoSVG className="h-12 w-24 transition duration-300 ease-in-out transform origin-center group-hover:animate-bounce fill-current text-white" />
