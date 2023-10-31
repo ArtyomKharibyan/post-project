@@ -22,6 +22,12 @@ const Header = () => {
         }
     }, [isAuth, navigate, location]);
 
+    useEffect(() => {
+        if(isAuth && (location.pathname === "/guest")) {
+            navigate("/feed")
+        }
+    }, [isAuth])
+
     const handleLogOut = async () => {
         try {
             localStorage.removeItem("token");

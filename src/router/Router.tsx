@@ -14,7 +14,7 @@ import Header from "../components/pages/Header";
 const Router = () => {
 
     const location = useLocation();
-    const isHeaderVisible = !["/signIn", "/signUp"].includes(location.pathname);
+    const isHeaderVisible = !["/signIn", "/signUp", "/"].includes(location.pathname);
 
 
     return (

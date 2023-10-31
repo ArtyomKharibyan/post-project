@@ -2,9 +2,9 @@ import React, {useCallback, useEffect, useState} from "react";
 import axios from "../server/axios";
 import {UserAuth} from "../../context/UserAuthContext";
 import {Api_Url} from "../server/config";
-import useInfiniteScroll from "../pagination/Pagination";
 import { format } from "date-fns";
 import { parseISO } from "date-fns";
+import InfiniteScroll from "react-infinite-scroll-component"
 
 interface PostWithLoading {
     name: string;
@@ -32,7 +32,8 @@ const Feed: React.FC = () => {
     const [commentTexts, setCommentTexts] = useState<{ [postId: string]: string }>({});
     const [visibleCommentsCounts, setVisibleCommentsCounts] = useState<{ [postId: string]: number }>({});
     const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
-    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [currentPage, setCurrentPage] = useState(1);
+
     const {isAuth, profileData} = UserAuth();
     const profileId = profileData?.id || "";
 
@@ -75,12 +76,20 @@ const Feed: React.FC = () => {
         getPosts(currentPage);
     }, [currentPage]);
 
+    let fetchMoreTimeout: NodeJS.Timeout;
+
+    const fetchMoreData = () => {
+        clearTimeout(fetchMoreTimeout);
+
+        fetchMoreTimeout = setTimeout(() => {
+            setCurrentPage(prevPage => prevPage + 1);
+        }, 500);
+    };
+
     const formatDate = (created_at: string) => {
         const parsedDate = parseISO(created_at);
         return format(parsedDate, "HH:mm");
     };
-
-    useInfiniteScroll(setCurrentPage);
 
     const handleCommentChange = useCallback(
         (postId: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,6 +157,12 @@ const Feed: React.FC = () => {
 
     return (
         <div>
+            <InfiniteScroll
+              dataLength={postList.length}
+              next={fetchMoreData}
+              hasMore={true}
+              loader={<p> </p>}
+            >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
                 {postList
                     .map((post, index,) => (
@@ -229,6 +244,7 @@ const Feed: React.FC = () => {
                         </div>
                     ))}
             </div>
+            </InfiniteScroll>
         </div>
     );
 };

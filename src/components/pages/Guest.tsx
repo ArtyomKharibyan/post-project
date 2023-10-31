@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "../server/axios";
 import Api_Url from "../server/config";
-import useInfiniteScroll from "../pagination/Pagination";
 import CommentSection from "../commentSection/CommentSection";
+import InfiniteScroll from "react-infinite-scroll-component"
 
 interface PostWithLoading {
     name: string;
@@ -65,17 +65,31 @@ const Guest = () => {
         }
     };
 
+    let fetchMoreTimeout: NodeJS.Timeout;
+
     useEffect(() => {
         fetchPosts(currentPage);
     }, [currentPage]);
 
-    useInfiniteScroll(setCurrentPage);
+    const fetchMoreData = () => {
+        clearTimeout(fetchMoreTimeout);
+
+        fetchMoreTimeout = setTimeout(() => {
+            setCurrentPage(prevPage => prevPage + 1);
+        }, 500);
+    };
 
     return (
         <div>
+            <InfiniteScroll
+                            dataLength={postList.length}
+                            next={fetchMoreData}
+                            hasMore={true}
+                            loader={<p> </p>}
+            >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
                 {postList.map((post, index,) => (
-                    <div className="p-3 rounded-2xl bg-purple-200 border border-black" key={index}>
+                    <div className="p-3 rounded-2xl bg-purple-200" key={index}>
                         <div>
                             {post?.imageUrl ? (
                                 <img src={post.imageUrl} alt="" className="w-full h-96 object-cover" />
@@ -107,6 +121,7 @@ const Guest = () => {
                     </div>
                 ))}
             </div>
+            </InfiniteScroll>
         </div>
     );
 };
