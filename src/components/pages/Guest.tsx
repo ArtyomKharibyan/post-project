@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import axios from "../server/axios";
-import Api_Url from "../server/config";
 import CommentSection from "../commentSection/CommentSection";
 import InfiniteScroll from "react-infinite-scroll-component"
+import axiosInstance from "../server/axios";
 
 interface PostWithLoading {
     name: string;
@@ -34,7 +33,7 @@ const Guest = () => {
 
     const fetchPosts = async (page: number) => {
         try {
-            const response = await axios.get(`${Api_Url}/guest?page=${page}`);
+            const response = await axiosInstance.get(`/guest?page=${page}`);
 
             if (Array.isArray(response.data)) {
                 const posts: PostWithLoading[] = response.data.map((post) => ({

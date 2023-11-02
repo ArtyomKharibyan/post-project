@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect, ChangeEvent } from "react";
-import axios from "../server/axios"
 import { UserAuth } from "../../context/UserAuthContext";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "../../firebase/firebase";
 import {defaultAvatarURL} from "../constants/AvatarUrl";
-import Api_Url from "../server/config";
+import axiosInstance from "../server/axios";
 
 const Profile = () => {
     const { user, profileData, setProfileData } = UserAuth();
@@ -21,7 +20,7 @@ const Profile = () => {
             setAvatarURL(downloadURL);
 
             try {
-                await axios.patch(`${Api_Url}/profile`, {
+                await axiosInstance.patch("/profile", {
                     avatarUrl: downloadURL,
                 });
                 if (profileData) {

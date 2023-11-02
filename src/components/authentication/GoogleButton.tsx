@@ -4,8 +4,7 @@ import {UserAuth} from "../../context/UserAuthContext";
 import "firebase/compat/auth";
 import {UserCredential} from "firebase/auth";
 import {storeTokenInLocalStorage} from "../../token/token";
-import axios from "../server/axios";
-import {Api_Url} from "../server/config";
+import axiosInstance from "../server/axios";
 
 type Props = {
     additionalClassName?: string;
@@ -40,7 +39,7 @@ const GoogleButton = ({additionalClassName = ''}: Props) => {
                 setIsSignUp(true)
 
                 if (isSignUp) {
-                    await axios.post(`${Api_Url}/profile`, userData);
+                    await axiosInstance.post(`/profile`, userData);
                 }
 
                 navigate("/profile");

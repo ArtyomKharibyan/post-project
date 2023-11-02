@@ -1,10 +1,9 @@
 import React, {ChangeEvent, useEffect, useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
 import {UserAuth} from "../../context/UserAuthContext";
-import axios from '../server/axios';
 import {updateProfile, UserCredential} from "firebase/auth";
-import {Api_Url} from "../server/config";
 import {storeTokenInLocalStorage} from "../../token/token";
+import axiosInstance from "../server/axios";
 
 interface InputFieldProps {
     placeholder: string;
@@ -41,7 +40,7 @@ const SignUp: React.FC = () => {
 
     const fetchUserProfile = async () => {
         try {
-            const response = await axios.post(`${Api_Url}/profile`, {name, surname, email})
+            const response = await axiosInstance.post(`/profile`, {name, surname, email})
 
             if (response.status === 200) {
                 const userData = response.data;

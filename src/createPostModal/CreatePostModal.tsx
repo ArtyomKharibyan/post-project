@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from "react";
-import axios from "../components/server/axios";
-import {Api_Url} from "../components/server/config";
+import axiosInstance from "../components/server/axios";
 import {UserAuth} from "../context/UserAuthContext";
 import {useNavigate} from "react-router-dom";
 import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
@@ -41,7 +40,7 @@ setImageUrl,
 	const [image, setImage] = useState<File | null>(null);
 
 	const {profileData} = UserAuth();
-	const profileId = profileData?.id ?? "";
+	const profileId = profileData?.id ?? null;
 
 	const navigate = useNavigate();
 
@@ -52,21 +51,16 @@ setImageUrl,
 			updatedImageUrl = await handleImageChange(image) as string
 		}
 		try {
-			const response = await axios.post(
-				`${Api_Url}/post`,
+			await axiosInstance.post(
+				`/post`,
 				{
 					title,
 					imageUrl: updatedImageUrl ?? imageUrl,
 					postText,
-					profileId: profileId,
+					profileId,
 				}
 			);
 
-			if (response.status === 200) {
-				return response;
-			} else {
-				console.error("Error fetching user profile:", response.statusText);
-			}
 		} catch (error) {
 			console.error("Network error:", error);
 		}
@@ -82,7 +76,7 @@ setImageUrl,
 				const url = await getDownloadURL(imageRef);
 
 				setImageUrl(url);
-				return url as string
+				return url as string;
 			} catch (error) {
 				console.error("Error uploading file:", error);
 			}
@@ -111,8 +105,7 @@ setImageUrl,
 
 	const createPost = async () => {
 		try {
-			const response = await postToServer();
-			if (response) {
+        await postToServer();
 				await getPost();
 				setCurrentPage(1);
 				resetForm();
@@ -124,7 +117,6 @@ setImageUrl,
 				}, 3000);
 
 				navigate("/posts");
-			}
 		} catch (error) {
 			console.error("Error creating post: ", error);
 		}

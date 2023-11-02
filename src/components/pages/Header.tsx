@@ -3,11 +3,10 @@ import { ReactComponent as OwoSVG } from "../images/Owl.svg";
 import "../../index.css"
 import { UserAuth } from "../../context/UserAuthContext";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import axios from "../server/axios";
-import { Api_Url } from "../server/config";
 import Loading from "../images/Loading.gif";
 import { getAuth } from "firebase/auth";
 import DarkMode from "../darkMode/DarkMode";
+import axiosInstance from "../server/axios";
 
 const Header = () => {
     const { logOut, setIsAuth, isAuth, setProfileData} = UserAuth();
@@ -46,7 +45,7 @@ const Header = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get(`${Api_Url}/profile`);
+                const response = await axiosInstance.get(`/profile`);
                 if (response.status === 200) {
                     const data = response.data;
                     setProfileData(data);

@@ -1,10 +1,9 @@
 import React, {useEffect, useState} from "react"
-import axios from "../server/axios";
-import {Api_Url} from "../server/config";
 import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
 import {storage} from "../../firebase/firebase";
 import {UserAuth} from "../../context/UserAuthContext";
 import {Post} from "../pages/Posts";
+import axiosInstance from "../server/axios";
 
 interface EditPostProps {
 	title: string;
@@ -37,7 +36,7 @@ currentPage,
 	const [isUploading, setIsUploading] = useState(false);
 	const [image, setImage] = useState<File>()
 	
-	const profileId = profileData?.id ?? "";
+	const profileId = profileData?.id ?? null;
 
 	const handleImageChange = async (file: File | undefined) => {
 		if (file) {
@@ -78,13 +77,13 @@ currentPage,
 			if(image) {
 				updatedImageUrl = await handleImageChange(image) as string
 			}
-			await axios.patch(`${Api_Url}/post/${editingPost?.id}`, {
+			await axiosInstance.patch(`/post/${editingPost?.id}`, {
 				title: title,
 				postText: postText,
 				imageUrl: updatedImageUrl ?? editedImageUrl,
 			});
 
-			const response = await axios.get(`${Api_Url}/post/${profileId}?page=${currentPage}`);
+			const response = await axiosInstance.get(`/post/${profileId}?page=${currentPage}`);
 			setPostData(response.data);
 
 			setCurrentPage(1)
@@ -168,7 +167,6 @@ currentPage,
 										>
 											Select a File
 										</label>
-
 									</form>
 								</div>
 

@@ -1,10 +1,9 @@
 import React, {useCallback, useEffect, useState} from "react";
-import axios from "../server/axios";
 import {UserAuth} from "../../context/UserAuthContext";
-import {Api_Url} from "../server/config";
 import { format } from "date-fns";
 import { parseISO } from "date-fns";
 import InfiniteScroll from "react-infinite-scroll-component"
+import axiosInstance from "../server/axios";
 
 interface PostWithLoading {
     name: string;
@@ -35,14 +34,14 @@ const Feed: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
 
     const {isAuth, profileData} = UserAuth();
-    const profileId = profileData?.id || "";
+    const profileId = profileData?.id || null;
 
     const initialCommentsCount = 3;
     const loadMoreCommentsCount = 3;
 
     const getPosts = async (page: number) => {
         try {
-            const response = await axios.get(`${Api_Url}/feed?page=${page}`);
+            const response = await axiosInstance.get(`/feed?page=${page}`);
             if (Array.isArray(response.data)) {
                 const posts = response.data.map((post) => ({
                     ...post,
@@ -126,7 +125,7 @@ const Feed: React.FC = () => {
                 [postId]: (prevVisibleCommentsCounts[postId] || 0) + 1,
             }));
 
-            const response = await axios.post(`${Api_Url}/comment`, {
+            const response = await axiosInstance.post(`/comment`, {
                 text: newComment.text,
                 profileId: profileId,
                 postId: postId,
@@ -165,8 +164,8 @@ const Feed: React.FC = () => {
             >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
                 {postList
-                    .map((post, index,) => (
-                        <div className="p-3 rounded-2xl bg-purple-200" key={index}>
+                    .map((post,) => (
+                        <div className="p-3 rounded-2xl bg-purple-200" key={post.id}>
                             <div>
                                 {post?.imageUrl ? (
                                     <img

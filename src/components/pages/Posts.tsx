@@ -1,11 +1,10 @@
 import React, {useCallback, useEffect, useState} from "react";
-import axios from "../server/axios";
 import {UserAuth} from "../../context/UserAuthContext";
-import {Api_Url} from "../server/config"
 import EditModal from "../edit/EditModal";
 import CreatePostModal from "../../createPostModal/CreatePostModal";
 import InfiniteScroll from "react-infinite-scroll-component"
 import DeleteModal from "../delete/DeleteModal"
+import axiosInstance from "../server/axios";
 
 export interface Post {
 	id: number;
@@ -36,15 +35,15 @@ const Posts: React.FC = () => {
 	const [currentPage, setCurrentPage] = useState(1);
 	const [editingPost, setEditingPost] = useState<Post | null>(null);
 	const [showDeleteModal, setShowDeleteModal] = React.useState(false);
-	const [selectedPost, setSelectedPost] = useState<Post[]>([]);
+	const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
 	const {profileData} = UserAuth();
-	const profileId = profileData?.id ?? "";
+	const profileId = profileData?.id ?? null;
 
 	const getPost = useCallback(async (isFetch?: boolean) => {
 		try {
 			if (profileId) {
-				const response = await axios.get(`${Api_Url}/post/${profileId}?page=${currentPage}`);
+				const response = await axiosInstance.get(`/post/${profileId}?page=${currentPage}`);
 				if (isFetch) {
 					setPostData(prevState => [...prevState, ...response.data]);
 				} else {
@@ -75,7 +74,6 @@ const Posts: React.FC = () => {
 		}, 1000)
 	}, []);
 
-
 	let fetchMoreTimeout: NodeJS.Timeout;
 
 	const fetchMoreData = () => {
@@ -94,7 +92,7 @@ const Posts: React.FC = () => {
 
 	const handleDeletePost = async (postToDelete: Post): Promise<void> => {
 		setShowDeleteModal(true)
-		setSelectedPost([postToDelete])
+		setSelectedPost(postToDelete)
 	}
 
 	const resetForm = () => {
@@ -119,7 +117,7 @@ const Posts: React.FC = () => {
 					<button
 						className="bg-blue-500 text-white active:bg-blue-700 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150 h-full"
 						type="button"
-						onClick={() => openCreatePostModal()}
+						onClick={openCreatePostModal}
 					>
 						Create Post
 					</button>
@@ -135,13 +133,13 @@ const Posts: React.FC = () => {
 							<div className="grid grid-cols-1 gap-2 w-6/12 justify-items-center">
 								<>
 									{
-										postData.map((post, index) => (
+										postData.map((post) => (
 												<div
-													key={index}
+													key={post.id}
 													className=" w-full bg-purple-200 border border-slate-300 my-4 rounded-3xl"
 												>
 													<div className="min-w-2xl">
-														{post.imageUrl?.length > 0 && (
+														{post.imageUrl && (
 															<img
 																src={post.imageUrl}
 																alt=""
@@ -160,8 +158,8 @@ const Posts: React.FC = () => {
 																	<div className="text-left text-gray-600 mb-2">
 																		<h3
 																			className="font-semibold text-slate-600 border-b border-solid border-zinc-700 rounded-sm w-full text-xl p-2 mb-2">Comments:</h3>
-																		{post.comment.map((comment, index) => (
-																			<div key={index} className="p-2">
+																		{post.comment.map((comment) => (
+																			<div key={comment.id} className="p-2">
 																				<div
 																					className="font-semibold">{comment.userName} {comment.userSurname}</div>
 																				{comment.text}
