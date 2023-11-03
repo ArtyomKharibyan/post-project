@@ -27,7 +27,7 @@ const DeleteModal: FC<DeleteModalProps> = ({showDeleteModal, setShowDeleteModal,
 
 	return (
 		<>
-			{showDeleteModal ? (
+			{showDeleteModal && (
 				<>
 					<div
 						className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none"
@@ -45,7 +45,7 @@ const DeleteModal: FC<DeleteModalProps> = ({showDeleteModal, setShowDeleteModal,
 										onClick={() => setShowDeleteModal(false)}
 									>
                     <span
-className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
+										className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
                       ×
                     </span>
 									</button>
@@ -77,7 +77,7 @@ className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-no
 						</div>
 					</div>
 				</>
-			) : null}
+			)}
 		</>
 	);
 }

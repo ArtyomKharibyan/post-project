@@ -36,7 +36,7 @@ currentPage,
 	const [isUploading, setIsUploading] = useState(false);
 	const [image, setImage] = useState<File>()
 	
-	const profileId = profileData?.id ?? null;
+	const profileId = profileData?.id || null;
 
 	const handleImageChange = async (file: File | undefined) => {
 		if (file) {
@@ -144,10 +144,6 @@ currentPage,
 								)}
 								{isUploading && <p>Uploading...</p>}
 								<div className="flex flex-col items-center">
-									<form onSubmit={(e) => {
-										e.preventDefault();
-										handleSubmitEdit()
-									}}>
 
 										<input
 											type="file"
@@ -167,7 +163,6 @@ currentPage,
 										>
 											Select a File
 										</label>
-									</form>
 								</div>
 
 								<textarea

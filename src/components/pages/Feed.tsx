@@ -156,11 +156,11 @@ const Feed: React.FC = () => {
 
     return (
         <div>
-            <InfiniteScroll
+            <InfiniteScroll className="w-full flex-col flex justify-center items-center"
               dataLength={postList.length}
               next={fetchMoreData}
               hasMore={true}
-              loader={<p> </p>}
+              loader={<p>Loading...</p>}
             >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
                 {postList

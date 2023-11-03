@@ -5,6 +5,8 @@ import {useNavigate} from "react-router-dom";
 import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
 import {storage} from "../firebase/firebase";
 import Notification from "../components/notification/Notification";
+import { Formik } from 'formik';
+
 
 interface ModalProps {
 	showModal: boolean;
@@ -22,32 +24,32 @@ interface ModalProps {
 
 
 const CreatePostModal: React.FC<ModalProps> = ({
-showModal,
-setShowModal,
-title,
-setTitle,
-imageUrl,
-postText,
-setPostText,
-getPost,
-setCurrentPage,
-resetForm,
-setImageUrl,
+	showModal,
+	setShowModal,
+	title,
+	setTitle,
+	imageUrl,
+	postText,
+	setPostText,
+	getPost,
+	setCurrentPage,
+	resetForm,
+	setImageUrl,
 
-                                              }) => {
+                                               }) => {
 
 	const [showNotification, setShowNotification] = useState(false);
 	const [image, setImage] = useState<File | null>(null);
 
 	const {profileData} = UserAuth();
-	const profileId = profileData?.id ?? null;
+	const profileId = profileData?.id || null;
 
 	const navigate = useNavigate();
 
 	const postToServer = async () => {
 		let updatedImageUrl = ""
 		setImage(null)
-		if(image) {
+		if (image) {
 			updatedImageUrl = await handleImageChange(image) as string
 		}
 		try {
@@ -88,12 +90,11 @@ setImageUrl,
 	};
 
 	useEffect(() => {
+		let objectUrl: string | null = null;
 
-		const objectUrl: string | null = null;
-
-		if(image) {
-			const objectUrl = URL.createObjectURL(image)
-			setImageUrl(objectUrl)
+		if (image) {
+			objectUrl = URL.createObjectURL(image);
+			setImageUrl(objectUrl);
 		}
 
 		return () => {
@@ -101,22 +102,22 @@ setImageUrl,
 				URL.revokeObjectURL(objectUrl);
 			}
 		};
-	},[image])
+	}, [image]);
 
 	const createPost = async () => {
 		try {
-        await postToServer();
-				await getPost();
-				setCurrentPage(1);
-				resetForm();
-				setShowModal(false);
-				setShowNotification(true);
+			await postToServer();
+			await getPost();
+			setCurrentPage(1);
+			resetForm();
+			setShowModal(false);
+			setShowNotification(true);
 
-				setTimeout(() => {
-					setShowNotification(false);
-				}, 3000);
+			setTimeout(() => {
+				setShowNotification(false);
+			}, 3000);
 
-				navigate("/posts");
+			navigate("/posts");
 		} catch (error) {
 			console.error("Error creating post: ", error);
 		}
@@ -156,10 +157,18 @@ setImageUrl,
 										/>
 									</div>
 									<div className="w-full max-h-[300px] overflow-y-auto">
-										<form onSubmit={(e) => {
-											e.preventDefault();
-											createPost()
-										}}>
+										<Formik
+											initialValues={{
+												title: '',
+												postText: '',
+											}}
+											onSubmit={(values, { resetForm }) => {
+												setTitle(values.title);
+												setPostText(values.postText);
+												createPost();
+												resetForm();
+											}}
+										>
 											<input
 												className="overflow-x-hidden flex justify-center items-center overflow-y-auto"
 												type="file"
@@ -172,7 +181,7 @@ setImageUrl,
 												}}
 												style={{display: "none"}}
 											/>
-										</form>
+										</Formik>
 										{imageUrl && (
 											<div className="relative">
 												<img
@@ -235,7 +244,7 @@ setImageUrl,
 					</div>
 				</div>
 			)}
-			<Notification show={showNotification} />
+			<Notification show={showNotification}/>
 		</>
 	);
 };

@@ -4,7 +4,8 @@ import EditModal from "../edit/EditModal";
 import CreatePostModal from "../../createPostModal/CreatePostModal";
 import InfiniteScroll from "react-infinite-scroll-component"
 import DeleteModal from "../delete/DeleteModal"
-import axiosInstance from "../server/axios";
+import {Api_Url} from "../server/config"
+import axios from "../server/axios";
 
 export interface Post {
 	id: number;
@@ -38,12 +39,12 @@ const Posts: React.FC = () => {
 	const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
 	const {profileData} = UserAuth();
-	const profileId = profileData?.id ?? null;
+	const profileId = profileData?.id || null;
 
 	const getPost = useCallback(async (isFetch?: boolean) => {
 		try {
 			if (profileId) {
-				const response = await axiosInstance.get(`/post/${profileId}?page=${currentPage}`);
+				const response = await axios.get(`${Api_Url}/post/${profileId}?page=${currentPage}`);
 				if (isFetch) {
 					setPostData(prevState => [...prevState, ...response.data]);
 				} else {
@@ -55,6 +56,7 @@ const Posts: React.FC = () => {
 		}
 	}, [currentPage, profileId]);
 
+
 	useEffect(() => {
 		(async () => {
 			if (currentPage === 1) {
@@ -65,30 +67,11 @@ const Posts: React.FC = () => {
 		})();
 	}, [getPost, currentPage]);
 
-	useEffect(() => {
-		setTimeout(() => {
-			setCurrentPage(1);
-			(async () => {
-				await getPost(false);
-			})();
-		}, 1000)
-	}, []);
-
-	let fetchMoreTimeout: NodeJS.Timeout;
-
-	const fetchMoreData = () => {
-		clearTimeout(fetchMoreTimeout);
-
-		fetchMoreTimeout = setTimeout(() => {
-			setCurrentPage(prevPage => prevPage + 1);
-		}, 500);
+	const fetchMoreData = async () => {
+		setCurrentPage(prevPage => prevPage + 1);
 	};
 
-	useEffect(() => {
-		return () => {
-			clearTimeout(fetchMoreTimeout);
-		};
-	}, []);
+	console.log(currentPage)
 
 	const handleDeletePost = async (postToDelete: Post): Promise<void> => {
 		setShowDeleteModal(true)
@@ -123,11 +106,11 @@ const Posts: React.FC = () => {
 					</button>
 				</div>
 				<div>
-					<InfiniteScroll
+					<InfiniteScroll className="flex-col flex justify-center"
 						dataLength={postData.length}
 						next={fetchMoreData}
 						hasMore={true}
-						loader={<p> </p>}
+						loader={<p className = "flex w-full bg-red  justify-center">Loading...</p>}
 					>
 						<div className="grid items-center justify-center grid-cols-1 md:grid-cols-1 gap-4 justify-items-center">
 							<div className="grid grid-cols-1 gap-2 w-6/12 justify-items-center">
@@ -222,7 +205,8 @@ const Posts: React.FC = () => {
 				resetForm={resetForm}
 			/>
 
-			<DeleteModal showDeleteModal={showDeleteModal}
+			<DeleteModal
+			showDeleteModal={showDeleteModal}
 			setShowDeleteModal={setShowDeleteModal}
 			selectedPost={selectedPost}
 			setPostData={setPostData}/>

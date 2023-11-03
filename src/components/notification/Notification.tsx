@@ -1,23 +1,10 @@
-import React, {useEffect} from "react";
+import React from "react";
 
 interface NotificationProps {
     show: boolean;
 }
 
 const Notification: React.FC<NotificationProps> = ({show}) => {
-
-    useEffect(() => {
-        let timer: string | number | NodeJS.Timeout | undefined;
-        if (show) {
-            timer = setTimeout(() => {
-                clearTimeout(timer);
-            }, 5000);
-        }
-
-        return () => {
-            clearTimeout(timer);
-        };
-    }, [show]);
 
     return (
         <div>
