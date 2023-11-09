@@ -1,45 +1,58 @@
 import React from "react";
-import {format} from "date-fns";
+import { format, parseISO } from "date-fns";
+import { Comment } from "../pages/Feed";
 
 interface CommentSectionProps {
-    comments: Comment[];
-    visibleCommentsCount: number;
-    loadMoreComments: () => void;
-}
-
-interface Comment {
-    userName: string;
-    userSurname: string;
-    text: string;
-    created_at: string;
+	post: {
+		id: string;
+		name: string;
+		surname: string;
+		comments: Comment[];
+	};
+	visibleCommentsCount: number;
+	loadMoreComments: () => void;
 }
 
 const CommentSection: React.FC<CommentSectionProps> = ({
-                                                           comments,
-                                                           visibleCommentsCount,
-                                                           loadMoreComments,
-                                                       }) => {
-    return (
-        <div className="text-gray-600 mt-4">
-            {comments.slice(0, visibleCommentsCount).map((comment, index) => (
-                <div key={index} className="mb-2 bg-slate-100 relative right-2 rounded-2xl p-2">
-                    <strong>User: {`${comment?.userName} ${comment?.userSurname}`}</strong>
-                    <br/>
-                    <div className="flex break-all flex-row justify-between">
-                        {comment.text}
-                        <span className="flex justify-end text-xs text-current">
-              {format(new Date(comment.created_at), "HH:mm")}
-            </span>
-                    </div>
-                </div>
-            ))}
-            {comments.length > visibleCommentsCount && (
-                <button className="text-blue-700 cursor-pointer" onClick={loadMoreComments}>
-                    Show more comments
-                </button>
-            )}
-        </div>
-    );
+  post,
+  visibleCommentsCount,
+  loadMoreComments,
+}) => {
+	
+  const formatDate = (created_at: string) => {
+    const parsedDate = parseISO(created_at);
+    return format(parsedDate, "HH:mm");
+  };
+	
+  return (
+    <div>
+      <div className="text-gray-600 mt-4">
+        {post.comments.slice(0, visibleCommentsCount).map((comment, index) => (
+          <div key={index} className="mb-2 bg-slate-100 relative right-2 rounded-2xl p-2">
+            <strong>User: {`${comment?.userName} ${comment?.userSurname}`}</strong>
+            <br />
+            <div className="flex break-all flex-row justify-between">
+              {comment.text}
+              <span className="flex justify-end text-xs text-current">{formatDate(comment.created_at)}</span>
+            </div>
+          </div>
+        ))}
+        {post.comments.length > visibleCommentsCount && (
+          <button
+            className="text-blue-700 cursor-pointer"
+            onClick={() => {
+              loadMoreComments();
+            }}
+          >
+						Show more comments
+          </button>
+        )}
+      </div>
+      <div className="font-semibold">
+				Author: {post.name} {post.surname}
+      </div>
+    </div>
+  );
 };
 
 export default CommentSection;

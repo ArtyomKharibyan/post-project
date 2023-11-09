@@ -13,25 +13,25 @@ import Header from "../components/pages/Header";
 
 const Router = () => {
 
-    const location = useLocation();
-    const isHeaderVisible = !["/signIn", "/signUp", "/"].includes(location.pathname);
+  const location = useLocation();
+  const isHeaderVisible = !["/signIn", "/signUp", "/"].includes(location.pathname);
 
 
-    return (
-        <>
-            {isHeaderVisible && <Header />}
-        <Routes>
-            <Route path="/" element={<SignUp/>}/>
-            <Route path="/signUp" element={<SignUp/>}/>
-            <Route path="/signIn" element={<SignIn/>}/>
-            <Route path="/posts" element=<CreatePost/>/>
-            <Route path="/feed" element={<Feed/>}/>
-            <Route path="/guest" element={<Guest/>}/>
-            <Route path="*" element={<NotFoundPage/>}/>
-            <Route path="/profile" element={<ProtectedRoute><App/></ProtectedRoute>}/>
-        </Routes>
-        </>
-    )
+  return (
+    <>
+      {isHeaderVisible && <Header/>}
+      <Routes>
+        <Route path="/" element={<SignUp/>}/>
+        <Route path="/signUp" element={<SignUp/>}/>
+        <Route path="/signIn" element={<SignIn/>}/>
+        <Route path="/posts" element=<CreatePost/>/>
+        <Route path="/feed" element={<Feed/>}/>
+        <Route path="/guest" element={<Guest/>}/>
+        <Route path="*" element={<NotFoundPage/>}/>
+        <Route path="/profile" element={<ProtectedRoute><App/></ProtectedRoute>}/>
+      </Routes>
+    </>
+  )
 }
 
 export default Router

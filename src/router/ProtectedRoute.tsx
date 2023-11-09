@@ -1,11 +1,11 @@
 import React, {ReactNode} from "react";
 
 interface ProtectedRouteProps {
-    children: ReactNode;
+	children: ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({children}) => {
-    return <>{children}</>;
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;
