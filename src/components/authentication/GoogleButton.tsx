@@ -1,9 +1,12 @@
-import React, {useState} from "react";
-import {useNavigate} from "react-router-dom";
-import {UserAuth} from "../../context/UserAuthContext";
 import "firebase/compat/auth";
-import {UserCredential} from "firebase/auth";
-import {storeTokenInLocalStorage} from "../../token/token";
+
+import { UserCredential } from "firebase/auth";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+
+import { UserAuth } from "../../context/UserAuthContext";
+import { storeTokenInLocalStorage } from "../../token/token";
 import axiosInstance from "../server/axios";
 
 type Props = {
@@ -11,9 +14,9 @@ type Props = {
 	isSignUp: boolean
 }
 
-const GoogleButton = ({additionalClassName = ''}: Props) => {
+const GoogleButton = ( {additionalClassName = ''} : Props) => {
   const navigate = useNavigate();
-  const {googleSignIn} = UserAuth();
+  const { googleSignIn } = UserAuth();
   const [userData, setUserData] = useState<{ name: string; surname: string; email: string }>({
     name: "",
     surname: "",
@@ -34,7 +37,7 @@ const GoogleButton = ({additionalClassName = ''}: Props) => {
         const surname = wordsArray.slice(1).join(" ") || "";
         const email = userCredential.user.email || "";
 
-        setUserData({name, surname, email});
+        setUserData({ name, surname, email });
 
         setIsSignUp(true)
 
@@ -45,7 +48,16 @@ const GoogleButton = ({additionalClassName = ''}: Props) => {
         navigate("/profile");
       }
     } catch (error) {
-      console.error(error);
+      toast.error("User not authenticated with google. Please try again.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
     }
   };
 

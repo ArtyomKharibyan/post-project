@@ -1,21 +1,26 @@
-import React, {useCallback, useEffect, useState} from "react";
-import {UserAuth} from "../../context/UserAuthContext";
-import EditModal from "../edit/EditModal";
-import CreatePostModal from "../../createPostModal/CreatePostModal";
+import React, { useCallback, useEffect, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component"
+import { toast } from "react-toastify";
+
+import { UserAuth } from "../../context/UserAuthContext";
+import CreatePostModal from "../../createPostModal/CreatePostModal";
 import DeleteModal from "../delete/DeleteModal"
+import EditModal from "../edit/EditModal";
 import axiosInstance from "../server/axios";
+import { Comments } from "./Feed";
 
 export interface Post {
-	id: number;
+	comments: Comments[];
+	id: string;
 	imageUrl: string;
 	postText: string;
 	title: string;
-	profileId?: number;
-	name?: string;
-	surname?: string;
+	profileId: number;
+	name: string;
+	surname: string;
 	comment?: Comment[];
 }
+
 
 export interface Comment {
 	id: number;
@@ -54,7 +59,16 @@ const Posts: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      toast.error("Error get posts.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
     }
   }, [currentPage, profileId]);
 	
@@ -76,7 +90,7 @@ const Posts: React.FC = () => {
 	
   useEffect(() => {
     if(allDataCount) {  
-      setHasMore(currentPage * 3 <= allDataCount);
+      setHasMore(currentPage * 3 < allDataCount);
     } else {
       setHasMore(false)
     }
@@ -120,7 +134,7 @@ const Posts: React.FC = () => {
                 {
                   postData.map((post, index) => (
                     <div
-                      key={`${post.id} - ${index}`}
+                      key={index}
                       className=" w-full bg-purple-200 border border-slate-300 my-4 rounded-3xl"
                     >
                       <div className="min-w-2xl">

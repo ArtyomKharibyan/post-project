@@ -1,4 +1,3 @@
-import React, {createContext, Dispatch, ReactNode, SetStateAction, useContext, useEffect, useState} from "react";
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
@@ -9,7 +8,10 @@ import {
   User,
   UserCredential
 } from "firebase/auth";
-import {auth} from "../firebase/firebase";
+import React, { createContext, Dispatch, ReactNode, SetStateAction, useContext, useEffect, useState } from "react";
+import { toast } from "react-toastify";
+
+import { auth } from "../firebase/firebase";
 
 interface UserAuthContextProviderProps {
 	children: ReactNode;
@@ -58,7 +60,16 @@ export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = (
       const result = await signInWithPopup(auth, provider);
       return result;
     } catch (error) {
-      console.error("Error signing in with Google:", error);
+      toast.error("Error logOut.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
       throw error;
     }
   };

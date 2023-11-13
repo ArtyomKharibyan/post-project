@@ -1,8 +1,11 @@
-import React, {useEffect, useState} from "react";
-import {Link, useNavigate} from "react-router-dom";
-import {UserAuth} from "../../context/UserAuthContext";
-import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
+
+import firebase from "firebase/compat/app";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+
+import { UserAuth } from "../../context/UserAuthContext";
 import GoogleButton from "./GoogleButton";
 
 const SignIn = () => {
@@ -22,23 +25,29 @@ const SignIn = () => {
     } catch (e) {
       if (e instanceof Error) {
         setError(e.message);
-        console.error(e.message);
-        console.error(error);
       }
     }
   };
 	
   useEffect(() => {
-    const checkUser = (user: firebase.User | null) => {
+    const checkUser = async (user: firebase.User | null) => {
       if (user) {
-        user.getIdToken(true)
-          .then((idToken: string) => {
-            localStorage.setItem("token", idToken);
-            navigate("/profile");
-          })
-          .catch((error) => {
-            console.error(error);
+        try {
+          const idToken: string = await user.getIdToken(true);
+          localStorage.setItem("token", idToken);
+          navigate("/profile");
+        } catch (error) {
+          toast.error("Error fetching token. Please try again.", {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
           });
+        }
       }
     };
 		
@@ -48,6 +57,7 @@ const SignIn = () => {
       unsubscribe();
     };
   }, []);
+
 	
   return (
     <div className="flex justify-center items-center min-h-screen w-full">

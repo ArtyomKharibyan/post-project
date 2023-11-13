@@ -1,8 +1,10 @@
-import React, {useEffect, useState} from "react"
-import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
-import {storage} from "../../firebase/firebase";
-import {UserAuth} from "../../context/UserAuthContext";
-import {Post} from "../pages/Posts";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import React, { useEffect, useState } from "react"
+import { toast } from "react-toastify";
+
+import { UserAuth } from "../../context/UserAuthContext";
+import { storage } from "../../firebase/firebase";
+import { Post } from "../pages/Posts";
 import axiosInstance from "../server/axios";
 
 interface EditPostProps {
@@ -34,7 +36,8 @@ const EditModal: React.FC<EditPostProps> = ({
   const [editedImageUrl, setEditedImageUrl] = useState<string | null>(editingPost?.imageUrl || null);
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [image, setImage] = useState<File>()
+  const [image, setImage] = useState<File | null>()
+  let updatedImageUrl = ""
 
   const profileId = profileData?.id || null;
 
@@ -48,7 +51,16 @@ const EditModal: React.FC<EditPostProps> = ({
 
         return url as string
       } catch (error) {
-        console.error("Error uploading file:", error);
+        toast.error("Error image change.", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
       } finally {
         setIsUploading(false);
       }
@@ -57,10 +69,10 @@ const EditModal: React.FC<EditPostProps> = ({
 
   useEffect(() => {
 
-    const objectUrl: string | null = null;
+    let objectUrl: string | null = null;
 
     if (image) {
-      const objectUrl = URL.createObjectURL(image)
+      objectUrl = URL.createObjectURL(image)
       setTempImageUrl(objectUrl)
     }
 
@@ -70,28 +82,37 @@ const EditModal: React.FC<EditPostProps> = ({
       }
     };
   }, [image])
-
+	
   const handleSubmitEdit = async () => {
     try {
-      let updatedImageUrl = ""
       if (image) {
         updatedImageUrl = await handleImageChange(image) as string
       }
       await axiosInstance.patch(`/post/${editingPost?.id}`, {
         title: title,
         postText: postText,
-        imageUrl: updatedImageUrl ?? editedImageUrl,
+        imageUrl: updatedImageUrl || editedImageUrl,
       });
 
-      const response = await axiosInstance.get(`/post/${profileId}?page=${currentPage}`);
+      const response = await axiosInstance.get(`/post/${profileId}?page=${currentPage }`);
       setPostData(response.data.posts);
 			
       setCurrentPage(1)
       onEditingPostChange(null);
       setEditedImageUrl(null);
       setTempImageUrl(null);
+      setImage(null)
     } catch (error) {
-      console.error("Error editing post: ", error);
+      toast.error("Error editing post.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
     }
   };
 
@@ -107,6 +128,7 @@ const EditModal: React.FC<EditPostProps> = ({
     onEditingPostChange(null)
     setEditedImageUrl(null);
     setTempImageUrl(null);
+    setImage(null)
   }
 
   const clearImage = () => {

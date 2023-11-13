@@ -1,8 +1,10 @@
-import React, {ChangeEvent, useEffect, useState} from "react";
-import {Link, useNavigate} from "react-router-dom";
-import {UserAuth} from "../../context/UserAuthContext";
-import {updateProfile, UserCredential} from "firebase/auth";
-import {storeTokenInLocalStorage} from "../../token/token";
+import { updateProfile, UserCredential } from "firebase/auth";
+import React, { ChangeEvent, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {toast} from "react-toastify";
+
+import { UserAuth } from "../../context/UserAuthContext";
+import { storeTokenInLocalStorage } from "../../token/token";
 import axiosInstance from "../server/axios";
 
 interface InputFieldProps {
@@ -41,16 +43,20 @@ const SignUp: React.FC = () => {
   const fetchUserProfile = async () => {
     try {
       const response = await axiosInstance.post(`/profile`, {name, surname, email})
-			
-      if (response.status === 200) {
-        const userData = response.data;
-        setProfileData(userData);
-        return response;
-      } else {
-        console.error('Error fetching user profile:', response.statusText);
-      }
+      const userData = response.data;
+      setProfileData(userData);
+      return response;
     } catch (error) {
-      console.error('Network error:', error);
+      toast.error("Error logOut.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
     }
   };
 	
@@ -59,24 +65,19 @@ const SignUp: React.FC = () => {
     setLoading(true);
 		
     try {
-      if (createUser) {
-        const userCredential: UserCredential = await createUser(email, password);
-        const user = userCredential.user;
+      const userCredential: UserCredential = await createUser(email, password);
+      const user = userCredential.user;
 				
-        const fullName: string = `${name} ${surname}`;
-        await updateProfile(user, {displayName: fullName});
+      const fullName: string = `${name} ${surname}`;
+      await updateProfile(user, {displayName: fullName});
 				
-        await storeTokenInLocalStorage(userCredential);
+      await storeTokenInLocalStorage(userCredential);
 				
-        await fetchUserProfile();
-        navigate('/profile');
-      } else {
-        setError('createUser function is undefined');
-      }
+      await fetchUserProfile();
+      navigate('/profile');
     } catch (e) {
       if (e instanceof Error) {
         setError(e.message);
-        console.error(e.message);
       }
     } finally {
       setLoading(false);

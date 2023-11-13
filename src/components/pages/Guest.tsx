@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import axiosInstance from "../server/axios";
-import { PostWithLoading } from "./Feed";
+import { toast } from "react-toastify";
+
 import CommentSection from "../commentSection/CommentSection";
+import axiosInstance from "../server/axios";
+import { Post } from "./Posts";
 
 const initialCommentsCount = 3;
 const loadMoreCommentsCount = 3;
 
 const Guest = () => {
-  const [postList, setPostList] = useState<PostWithLoading[]>([]);
+  const [postList, setPostList] = useState<Post[]>([]);
   const [visibleCommentsCounts, setVisibleCommentsCounts] = useState<{ [postId: string]: number }>({});
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [allDataCount, setAllDataCount] = useState<number | null>(null);
@@ -18,32 +20,46 @@ const Guest = () => {
     try {
       const response = await axiosInstance.get(`/guest?page=${page}`);
       if (response.data.posts) {
-        const posts: PostWithLoading[] = response.data.posts.map((post: { comment: never }) => ({
+        const posts = response.data.posts.map((post: { comment: string }) => ({
           ...post,
           comments: post.comment || [],
           loading: false,
-        }));
+        })) as Post[]
         setAllDataCount(response.data.countAllData)
-        const newVisibleCommentsCounts: { [postId: string]: number } = {};
-        posts.forEach((post) => {
-          newVisibleCommentsCounts[post.id] = initialCommentsCount;
-        });
         setPostList((prevPostList) => (page === 1 ? posts : [...prevPostList, ...posts]));
         setVisibleCommentsCounts((prevVisibleCommentsCounts) => ({
           ...prevVisibleCommentsCounts,
-          ...newVisibleCommentsCounts,
         }));
       } else {
-        console.error("Invalid or empty response data");
+        toast.error("Error fetching token. Please try again.", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
       }
+
     } catch (error) {
-      console.error("Error fetching posts:", error);
+      toast.error("Error fetching token. Please try again.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
     }
   };
 	
   useEffect(() => {
     if(allDataCount) {
-      setHasMore(currentPage * 6 <= allDataCount);
+      setHasMore(currentPage * 6 < allDataCount);
     }
   },[currentPage])
 	

@@ -1,15 +1,16 @@
 import React from "react"
-import {Route, Routes} from 'react-router-dom';
-import SignUp from "../components/authentication/SignUp";
-import SignIn from "../components/authentication/SignIn";
+import { useLocation } from "react-router";
+import { Route, Routes } from 'react-router-dom';
+
 import App from "../App";
-import ProtectedRoute from "./ProtectedRoute";
-import {useLocation} from "react-router";
-import CreatePost from "../components/pages/Posts";
-import Feed from "../components/pages/Feed";
+import SignIn from "../components/authentication/SignIn";
+import SignUp from "../components/authentication/SignUp";
 import NotFoundPage from "../components/notFound/NotFoundPage";
+import Feed from "../components/pages/Feed";
 import Guest from "../components/pages/Guest";
 import Header from "../components/pages/Header";
+import CreatePost from "../components/pages/Posts";
+import ProtectedRoute from "./ProtectedRoute";
 
 const Router = () => {
 

@@ -1,11 +1,14 @@
-import React, {useEffect, useState} from "react";
-import {ReactComponent as OwoSVG} from "../images/Owl.svg";
 import "../../index.css"
-import {UserAuth} from "../../context/UserAuthContext";
-import {Link, useLocation, useNavigate} from "react-router-dom";
-import Loading from "../images/Loading.gif";
+
 import {getAuth} from "firebase/auth";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+
+import { UserAuth } from "../../context/UserAuthContext";
 import DarkMode from "../darkMode/DarkMode";
+import Loading from "../images/Loading.gif";
+import { ReactComponent as OwoSVG } from "../images/Owl.svg";
 import axiosInstance from "../server/axios";
 
 const Header = () => {
@@ -37,7 +40,16 @@ const Header = () => {
       setIsAuth(false);
     } catch (e) {
       if (e instanceof Error) {
-        console.error(e.message);
+        toast.error("Error logOut.", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
       }
     }
   };
@@ -46,14 +58,20 @@ const Header = () => {
     const fetchData = async () => {
       try {
         const response = await axiosInstance.get(`/profile`);
-        if (response.status === 200) {
-          const data = response.data;
-          setProfileData(data);
-        } else {
-          console.error("Error fetching profile data:", response.statusText);
-        }
+        const data = response.data;
+        setProfileData(data);
+				
       } catch (error) {
-        console.error("Network error:", error);
+        toast.error("Error getting profile data.", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
       } finally {
         setIsLoading(false);
       }

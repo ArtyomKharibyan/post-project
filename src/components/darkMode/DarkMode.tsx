@@ -1,7 +1,9 @@
-import React, {useEffect, useState} from "react";
-import {ReactComponent as Sun} from "../images/Sun.svg";
-import {ReactComponent as Moon} from "../images/Moon.svg";
 import "./DarkMode.css";
+
+import React, { useEffect, useState } from "react";
+
+import { ReactComponent as Moon } from "../images/Moon.svg";
+import { ReactComponent as Sun } from "../images/Sun.svg";
 
 const DarkMode = () => {
   const [isChecked, setIsChecked] = useState(

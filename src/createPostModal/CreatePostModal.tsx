@@ -1,11 +1,13 @@
-import React, {useEffect, useState} from "react";
-import axiosInstance from "../components/server/axios";
-import {UserAuth} from "../context/UserAuthContext";
-import {useNavigate} from "react-router-dom";
-import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
-import {storage} from "../firebase/firebase";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { Formik } from 'formik';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+
 import Notification from "../components/notification/Notification";
-import {Formik} from 'formik';
+import axiosInstance from "../components/server/axios";
+import { UserAuth } from "../context/UserAuthContext";
+import { storage } from "../firebase/firebase";
 
 
 interface ModalProps {
@@ -63,7 +65,16 @@ const CreatePostModal: React.FC<ModalProps> = ({
       );
 			
     } catch (error) {
-      console.error("Network error:", error);
+      toast.error("Error fetch data.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
     }
   };
 	
@@ -79,7 +90,16 @@ const CreatePostModal: React.FC<ModalProps> = ({
         setImageUrl(url);
         return url as string;
       } catch (error) {
-        console.error("Error uploading file:", error);
+        toast.error("Error add image.", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
       }
     }
   };
@@ -118,7 +138,16 @@ const CreatePostModal: React.FC<ModalProps> = ({
 			
       navigate("/posts");
     } catch (error) {
-      console.error("Error creating post: ", error);
+      toast.error("Error create post.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
     }
   };
 	
@@ -145,16 +174,6 @@ const CreatePostModal: React.FC<ModalProps> = ({
               </div>
               <div className="overflow-y-auto overflow-x-hidden relative w-96 p-3 h-96">
                 <div className="flex flex-col">
-                  <div className="flex flex-col h-24 p-1">
-                    <input
-                      className="border-2 border-silver rounded-md p-1 z-0"
-                      placeholder="Title..."
-                      value={title}
-                      onChange={(event) => {
-                        setTitle(event.target.value);
-                      }}
-                    />
-                  </div>
                   <div className="w-full max-h-[300px] overflow-y-auto">
                     <Formik
                       initialValues={{
@@ -168,18 +187,30 @@ const CreatePostModal: React.FC<ModalProps> = ({
                         resetForm();
                       }}
                     >
-                      <input
-                        className="overflow-x-hidden flex justify-center items-center overflow-y-auto"
-                        type="file"
-                        ref={fileInputRef}
-                        key={imageUrl || undefined}
-                        onChange={(event) => {
-                          if (event?.target?.files?.[0]) {
-                            setImage(event.target.files[0]);
-                          }
-                        }}
-                        style={{display: "none"}}
-                      />
+                      <>
+                        <div className="flex flex-col h-24 p-1">
+                          <input
+                            className="border-2 border-silver rounded-md p-1 z-0"
+                            placeholder="Title..."
+                            value={title}
+                            onChange={(event) => {
+                              setTitle(event.target.value);
+                            }}
+                          />
+                        </div>
+                        <input
+                          className="overflow-x-hidden flex justify-center items-center overflow-y-auto"
+                          type="file"
+                          ref={fileInputRef}
+                          key={imageUrl || undefined}
+                          onChange={(event) => {
+                            if (event?.target?.files?.[0]) {
+                              setImage(event.target.files[0]);
+                            }
+                          }}
+                          style={{display: "none"}}
+                        />
+                      </>
                     </Formik>
                     {imageUrl && (
                       <div className="relative">

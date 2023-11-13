@@ -1,15 +1,16 @@
-import React, {ChangeEvent, useEffect, useRef, useState} from "react";
-import {UserAuth} from "../../context/UserAuthContext";
-import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
-import {storage} from "../../firebase/firebase";
-import {defaultAvatarURL} from "../constants/AvatarUrl";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import React, { ChangeEvent, useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
+
+import { UserAuth } from "../../context/UserAuthContext";
+import { storage } from "../../firebase/firebase";
+import { defaultAvatarURL } from "../constants/AvatarUrl";
 import axiosInstance from "../server/axios";
 
 const Profile = () => {
   const {user, profileData, setProfileData} = UserAuth();
   const [avatarURL, setAvatarURL] = useState(profileData?.avatarUrl ?? defaultAvatarURL);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [loading, setLoading] = useState(true);
 	
   const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -30,7 +31,16 @@ const Profile = () => {
           })
         }
       } catch (error) {
-        console.error("Error sending avatar URL to the backend:", error);
+        toast.error("Error add avatar.", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
       }
     }
   };
@@ -42,13 +52,8 @@ const Profile = () => {
       } else {
         setAvatarURL(defaultAvatarURL);
       }
-      setLoading(false);
     }
   }, [profileData, setProfileData]);
-	
-  if (loading) {
-    return <div> </div>;
-  }
 	
   const handleButtonClick = () => {
     fileInputRef?.current?.click();

@@ -1,4 +1,4 @@
-import {UserCredential} from "firebase/auth";
+import { UserCredential } from "firebase/auth";
 
 export const storeTokenInLocalStorage = async (userCredential: UserCredential) => {
   try {
