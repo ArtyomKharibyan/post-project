@@ -2,10 +2,10 @@ import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { Formik } from 'formik';
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 
 import Notification from "../components/notification/Notification";
 import axiosInstance from "../components/server/axios";
+import showErrorToast from "../components/toastService/toastService";
 import { UserAuth } from "../context/UserAuthContext";
 import { storage } from "../firebase/firebase";
 
@@ -42,7 +42,7 @@ const CreatePostModal: React.FC<ModalProps> = ({
   const [showNotification, setShowNotification] = useState(false);
   const [image, setImage] = useState<File | null>(null);
 	
-  const {profileData} = UserAuth();
+  const { profileData } = UserAuth();
   const profileId = profileData?.id || null;
 	
   const navigate = useNavigate();
@@ -65,16 +65,7 @@ const CreatePostModal: React.FC<ModalProps> = ({
       );
 			
     } catch (error) {
-      toast.error("Error fetch data.", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
-      });
+      showErrorToast("Error fetch data.")
     }
   };
 	
@@ -90,22 +81,14 @@ const CreatePostModal: React.FC<ModalProps> = ({
         setImageUrl(url);
         return url as string;
       } catch (error) {
-        toast.error("Error add image.", {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-        });
+        showErrorToast("Error add image.")
       }
     }
   };
 	
   const clearImage = () => {
     setImageUrl(null);
+    setImage(null)
   };
 	
   useEffect(() => {
@@ -138,16 +121,7 @@ const CreatePostModal: React.FC<ModalProps> = ({
 			
       navigate("/posts");
     } catch (error) {
-      toast.error("Error create post.", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
-      });
+      showErrorToast("Error create post.")
     }
   };
 	
@@ -180,7 +154,7 @@ const CreatePostModal: React.FC<ModalProps> = ({
                         title: '',
                         postText: '',
                       }}
-                      onSubmit={(values, {resetForm}) => {
+                      onSubmit={(values, { resetForm }) => {
                         setTitle(values.title);
                         setPostText(values.postText);
                         createPost();
@@ -210,43 +184,43 @@ const CreatePostModal: React.FC<ModalProps> = ({
                           }}
                           style={{display: "none"}}
                         />
+                        {imageUrl && (
+                          <div className="relative">
+                            <img
+                              className="w-full h-full"
+                              src={imageUrl}
+                              alt="Selected"
+                            />
+                            <button
+                              className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full"
+                              onClick={clearImage}
+                            >
+                              Clear
+                            </button>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <button
+                            onClick={handleChooseFile}
+                            className="bg-blue-500 w-full text-white active:bg-blue-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                          >
+                         Choose Image
+                          </button>
+                        </div>
+                        <div className="flex flex-col h-52">
+                          <p className="flex justify-left text-white">Content:</p>
+                          <textarea
+                            value={postText}
+                            onChange={(event) => {
+                              setPostText(event.target.value);
+                            }}
+                            placeholder="Content..."
+                            className="border-2 border-silver rounded-sm h-40 resize-none rounded-md"
+                          />
+                        </div>
                       </>
                     </Formik>
-                    {imageUrl && (
-                      <div className="relative">
-                        <img
-                          className="w-full h-full"
-                          src={imageUrl}
-                          alt="Selected"
-                        />
-                        <button
-                          className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full"
-                          onClick={clearImage}
-                        >
-													Clear
-                        </button>
-                      </div>
-                    )}
                   </div>
-                  <div className="flex justify-between">
-                    <button
-                      onClick={handleChooseFile}
-                      className="bg-blue-500 w-full text-white active:bg-blue-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                    >
-											Choose Image
-                    </button>
-                  </div>
-                </div>
-                <div className="flex flex-col h-52">
-                  <p className="flex justify-left text-white">Content:</p>
-                  <textarea
-                    value={postText}
-                    onChange={(event) => {
-                      setPostText(event.target.value);
-                    }}
-                    placeholder="Content..."
-                    className="border-2 border-silver rounded-sm h-40 resize-none rounded-md"
-                  />
                 </div>
               </div>
               <div

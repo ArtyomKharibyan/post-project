@@ -3,9 +3,9 @@ import "firebase/compat/auth";
 import firebase from "firebase/compat/app";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 
 import { UserAuth } from "../../context/UserAuthContext";
+import showErrorToast from "../toastService/toastService";
 import GoogleButton from "./GoogleButton";
 
 const SignIn = () => {
@@ -13,7 +13,7 @@ const SignIn = () => {
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
   const navigate = useNavigate();
-  const {signIn} = UserAuth();
+  const { signIn } = UserAuth();
 	
   const handleClick = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
@@ -37,16 +37,7 @@ const SignIn = () => {
           localStorage.setItem("token", idToken);
           navigate("/profile");
         } catch (error) {
-          toast.error("Error fetching token. Please try again.", {
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
-          });
+          showErrorToast("Error fetching token. Please try again.")
         }
       }
     };

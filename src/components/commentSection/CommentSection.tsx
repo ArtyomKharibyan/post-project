@@ -1,18 +1,14 @@
 import { format, parseISO } from "date-fns";
 import React from "react";
 
-import { Comments } from "../pages/Feed";
+import { Post } from "../pages/Posts";
 
 interface CommentSectionProps {
-	post: {
-		id: string;
-		name: string;
-		surname: string;
-		comments: Comments[];
-	};
+	post: Post;
 	visibleCommentsCount: number;
 	loadMoreComments: () => void;
 }
+
 const CommentSection: React.FC<CommentSectionProps> = ({
   post,
   visibleCommentsCount,
@@ -27,8 +23,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   return (
     <div>
       <div className="text-gray-600 mt-4">
-        {post.comments.slice(0, visibleCommentsCount).map((comment, index) => (
-          <div key={index} className="mb-2 bg-slate-100 relative right-2 rounded-2xl p-2">
+        {post.comment?.slice(0, visibleCommentsCount)?.map((comment) => (
+          <div key={comment.id} className="mb-2 bg-slate-100 relative right-2 rounded-2xl p-2">
             <strong>User: {`${comment.userName} ${comment.userSurname}`}</strong>
             <br />
             <div className="flex break-all flex-row justify-between">
@@ -37,7 +33,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
             </div>
           </div>
         ))}
-        {post.comments.length > visibleCommentsCount && (
+        {post.comment && post.comment.length > visibleCommentsCount && (
           <button
             className="text-blue-700 cursor-pointer"
             onClick={loadMoreComments}

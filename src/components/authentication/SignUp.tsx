@@ -1,11 +1,11 @@
 import { updateProfile, UserCredential } from "firebase/auth";
 import React, { ChangeEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {toast} from "react-toastify";
 
 import { UserAuth } from "../../context/UserAuthContext";
 import { storeTokenInLocalStorage } from "../../token/token";
 import axiosInstance from "../server/axios";
+import showErrorToast from "../toastService/toastService";
 
 interface InputFieldProps {
 	placeholder: string;
@@ -32,7 +32,7 @@ const SignUp: React.FC = () => {
   const [surname, setSurname] = useState<string>("");
   const [error, setError] = useState<string>("");
   const navigate = useNavigate();
-  const {createUser, setProfileData} = UserAuth();
+  const { createUser, setProfileData } = UserAuth();
 	
   const isSubmitDisabled: boolean = !(name.trim() !== "" && surname.trim() !== "" && email.trim() !== "" && password.trim() !== "");
 	
@@ -47,16 +47,7 @@ const SignUp: React.FC = () => {
       setProfileData(userData);
       return response;
     } catch (error) {
-      toast.error("Error logOut.", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
-      });
+      showErrorToast("Error logOut")
     }
   };
 	
@@ -127,7 +118,7 @@ const SignUp: React.FC = () => {
           <div>
 						Already have an account? <Link className="text-sky-500" to="/signIn">Sign In</Link>
             <br/>
-						Login as <Link className="text-sky-500" to={"/guest"}>Guest</Link>
+						Login as <Link className="text-sky-500" to="/guest">Guest</Link>
           </div>
         </div>
       </div>

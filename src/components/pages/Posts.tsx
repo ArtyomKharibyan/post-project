@@ -1,17 +1,15 @@
 import React, { useCallback, useEffect, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component"
-import { toast } from "react-toastify";
 
 import { UserAuth } from "../../context/UserAuthContext";
 import CreatePostModal from "../../createPostModal/CreatePostModal";
 import DeleteModal from "../delete/DeleteModal"
 import EditModal from "../edit/EditModal";
 import axiosInstance from "../server/axios";
-import { Comments } from "./Feed";
+import showErrorToast from "../toastService/toastService";
 
 export interface Post {
-	comments: Comments[];
-	id: string;
+	id: number;
 	imageUrl: string;
 	postText: string;
 	title: string;
@@ -25,10 +23,11 @@ export interface Post {
 export interface Comment {
 	id: number;
 	text: string;
-	profileId: number;
-	postId: number;
+	profileId?: number;
+	postId?: number;
 	userName?: string;
 	userSurname?: string;
+	created_at: string;
 }
 
 const Posts: React.FC = () => {
@@ -44,7 +43,7 @@ const Posts: React.FC = () => {
   const [allDataCount, setAllDataCount] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(true);
 	
-  const {profileData} = UserAuth();
+  const { profileData } = UserAuth();
   const profileId = profileData?.id || null;
 	
   const getPost = useCallback(async (isFetch?: boolean) => {
@@ -59,16 +58,7 @@ const Posts: React.FC = () => {
         }
       }
     } catch (error) {
-      toast.error("Error get posts.", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
-      });
+      showErrorToast("Error get posts.")
     }
   }, [currentPage, profileId]);
 	
@@ -132,9 +122,9 @@ const Posts: React.FC = () => {
             <div className="grid grid-cols-1 gap-2 w-6/12 justify-items-center">
               <>
                 {
-                  postData.map((post, index) => (
+                  postData.map((post) => (
                     <div
-                      key={index}
+                      key={post.id}
                       className=" w-full bg-purple-200 border border-slate-300 my-4 rounded-3xl"
                     >
                       <div className="min-w-2xl">

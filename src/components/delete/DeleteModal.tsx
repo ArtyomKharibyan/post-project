@@ -1,8 +1,8 @@
 import React, { FC } from "react";
-import { toast } from "react-toastify";
 
 import { Post } from "../pages/Posts";
 import axiosInstance from "../server/axios";
+import showErrorToast from "../toastService/toastService";
 
 interface DeleteModalProps {
 	showDeleteModal: boolean;
@@ -22,16 +22,7 @@ const DeleteModal: FC<DeleteModalProps> = ({showDeleteModal, setShowDeleteModal,
         );
         setShowDeleteModal(false)
       } catch (error) {
-        toast.error("Error logOut.", {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-        });
+        showErrorToast("Error logOut.")
       }
     }
   };

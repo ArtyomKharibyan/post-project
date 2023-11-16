@@ -1,18 +1,18 @@
 import "../../index.css"
 
-import {getAuth} from "firebase/auth";
+import { getAuth } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 
 import { UserAuth } from "../../context/UserAuthContext";
 import DarkMode from "../darkMode/DarkMode";
 import Loading from "../images/Loading.gif";
 import { ReactComponent as OwoSVG } from "../images/Owl.svg";
 import axiosInstance from "../server/axios";
+import showErrorToast from "../toastService/toastService";
 
 const Header = () => {
-  const {logOut, setIsAuth, isAuth, setProfileData} = UserAuth();
+  const { logOut, setIsAuth, isAuth, setProfileData } = UserAuth();
   const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
@@ -40,16 +40,7 @@ const Header = () => {
       setIsAuth(false);
     } catch (e) {
       if (e instanceof Error) {
-        toast.error("Error logOut.", {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-        });
+        showErrorToast("Error logOut.")
       }
     }
   };
@@ -62,16 +53,7 @@ const Header = () => {
         setProfileData(data);
 				
       } catch (error) {
-        toast.error("Error getting profile data.", {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-        });
+        showErrorToast("Error getting profile data.")
       } finally {
         setIsLoading(false);
       }

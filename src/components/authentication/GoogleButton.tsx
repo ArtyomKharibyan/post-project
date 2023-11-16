@@ -3,11 +3,11 @@ import "firebase/compat/auth";
 import { UserCredential } from "firebase/auth";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 
 import { UserAuth } from "../../context/UserAuthContext";
 import { storeTokenInLocalStorage } from "../../token/token";
 import axiosInstance from "../server/axios";
+import showErrorToast from "../toastService/toastService";
 
 type Props = {
 	additionalClassName?: string;
@@ -48,16 +48,7 @@ const GoogleButton = ( {additionalClassName = ''} : Props) => {
         navigate("/profile");
       }
     } catch (error) {
-      toast.error("User not authenticated with google. Please try again.", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
-      });
+      showErrorToast("User not authenticated with google. Please try again.")
     }
   };
 

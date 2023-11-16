@@ -9,8 +9,8 @@ import {
   UserCredential
 } from "firebase/auth";
 import React, { createContext, Dispatch, ReactNode, SetStateAction, useContext, useEffect, useState } from "react";
-import { toast } from "react-toastify";
 
+import showErrorToast from "../components/toastService/toastService";
 import { auth } from "../firebase/firebase";
 
 interface UserAuthContextProviderProps {
@@ -60,16 +60,7 @@ export const UserAuthContextProvider: React.FC<UserAuthContextProviderProps> = (
       const result = await signInWithPopup(auth, provider);
       return result;
     } catch (error) {
-      toast.error("Error logOut.", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
-      });
+      showErrorToast("Error logOut.")
       throw error;
     }
   };

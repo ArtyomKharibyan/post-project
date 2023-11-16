@@ -1,1 +1,0 @@
-export const defaultAvatarURL = "https://firebasestorage.googleapis.com/v0/b/post-project-80c0a.appspot.com/o/images%2FUserAvatar.png?alt=media&token=af9525b4-1f0e-468f-9352-f04004248dfc";

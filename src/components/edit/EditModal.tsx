@@ -1,11 +1,11 @@
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import React, { useEffect, useState } from "react"
-import { toast } from "react-toastify";
 
 import { UserAuth } from "../../context/UserAuthContext";
 import { storage } from "../../firebase/firebase";
 import { Post } from "../pages/Posts";
 import axiosInstance from "../server/axios";
+import showErrorToast from "../toastService/toastService";
 
 interface EditPostProps {
 	title: string;
@@ -32,7 +32,7 @@ const EditModal: React.FC<EditPostProps> = ({
   onEditingPostChange,
 }) => {
 
-  const {profileData} = UserAuth()
+  const { profileData } = UserAuth()
   const [editedImageUrl, setEditedImageUrl] = useState<string | null>(editingPost?.imageUrl || null);
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -51,16 +51,7 @@ const EditModal: React.FC<EditPostProps> = ({
 
         return url as string
       } catch (error) {
-        toast.error("Error image change.", {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "light",
-        });
+        showErrorToast("Error image change.")
       } finally {
         setIsUploading(false);
       }
@@ -94,7 +85,7 @@ const EditModal: React.FC<EditPostProps> = ({
         imageUrl: updatedImageUrl || editedImageUrl,
       });
 
-      const response = await axiosInstance.get(`/post/${profileId}?page=${currentPage }`);
+      const response = await axiosInstance.get(`/post/${profileId}?page=${currentPage}`);
       setPostData(response.data.posts);
 			
       setCurrentPage(1)
@@ -103,16 +94,7 @@ const EditModal: React.FC<EditPostProps> = ({
       setTempImageUrl(null);
       setImage(null)
     } catch (error) {
-      toast.error("Error editing post.", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
-      });
+      showErrorToast("Error editing post.")
     }
   };
 
@@ -133,6 +115,7 @@ const EditModal: React.FC<EditPostProps> = ({
 
   const clearImage = () => {
     setTempImageUrl(null)
+    setImage(null)
   }
 
   return (

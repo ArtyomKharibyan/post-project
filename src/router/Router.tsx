@@ -16,8 +16,6 @@ const Router = () => {
 
   const location = useLocation();
   const isHeaderVisible = !["/signIn", "/signUp", "/"].includes(location.pathname);
-
-
   return (
     <>
       {isHeaderVisible && <Header/>}
