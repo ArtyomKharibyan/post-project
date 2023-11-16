@@ -23,7 +23,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   return (
     <div>
       <div className="text-gray-600 mt-4">
-        {post.comment?.slice(0, visibleCommentsCount)?.map((comment) => (
+        {post.comment?.slice(0, visibleCommentsCount).map((comment) => (
           <div key={comment.id} className="mb-2 bg-slate-100 relative right-2 rounded-2xl p-2">
             <strong>User: {`${comment.userName} ${comment.userSurname}`}</strong>
             <br />

@@ -9,14 +9,12 @@ interface CommentInputSectionProps {
 	postId: number;
 	setVisibleCommentsCounts: React.Dispatch<React.SetStateAction<number>>;
 	setPostList: React.Dispatch<React.SetStateAction<Post[]>>;
-	postList: Post[]
 }
 
 const CommentInputSection: React.FC<CommentInputSectionProps> = ({
   postId,
   setVisibleCommentsCounts,
   setPostList,
-  postList
 }) => {
 	
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
@@ -44,15 +42,13 @@ const CommentInputSection: React.FC<CommentInputSectionProps> = ({
         postId,
         userName: profileData?.name,
         userSurname: profileData?.surname,
-        created_at: new Date().toISOString(),
+        created_at: response.data.createdAt
       }
       setPostList((prevPostList) =>
         prevPostList.map((post) =>
           post.id === postId ? { ...post, comment: [...(post.comment || []), newComment] } : post
         )
       );
-			
-      console.log(postList)
 			
     } catch (error) {
       showErrorToast("Error fetching token. Please try again.")
@@ -75,7 +71,7 @@ const CommentInputSection: React.FC<CommentInputSectionProps> = ({
               className="w-full relative right-2 rounded-md border border-silver-300 p-1"
               type="text"
               placeholder="Enter your comment"
-              value={commentTexts || ""}
+              value={commentTexts}
               onChange={handleCommentChange}
             />
             {isCommentSubmitting ? (

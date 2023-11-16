@@ -8,14 +8,12 @@ import { Post } from "../pages/Posts";
 
 interface FeedPostsProps {
 	post: Post;
-	postList: Post[];
 	setPostList: React.Dispatch<React.SetStateAction<Post[]>>;
 }
 
 const FeedPosts: React.FC<FeedPostsProps> = ({
   post,
   setPostList,
-  postList
 }) => {
   const [visibleCommentsCounts, setVisibleCommentsCounts] = useState<number>(initialCommentsCount);
 	
@@ -37,7 +35,6 @@ const FeedPosts: React.FC<FeedPostsProps> = ({
       </>
       <CommentInputSection
         postId={post.id}
-        postList={postList}
         setPostList={setPostList}
         setVisibleCommentsCounts={setVisibleCommentsCounts}
       />

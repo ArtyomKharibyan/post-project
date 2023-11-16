@@ -26,9 +26,13 @@ const Header = () => {
 	
   useEffect(() => {
     if (isAuth && (location.pathname === "/guest")) {
-      navigate("/feed")
+      navigate("/guest")
     }
   }, [isAuth])
+	
+  const signUp = () => {
+    navigate("/signUp")
+  }
 	
   const handleLogOut = async () => {
     try {
@@ -36,7 +40,7 @@ const Header = () => {
       localStorage.setItem("selectedTheme", "light");
       document?.querySelector("body")?.setAttribute("data-theme", "light");
       await logOut();
-      navigate("/signIn");
+      navigate("/signUp");
       setIsAuth(false);
     } catch (e) {
       if (e instanceof Error) {
@@ -48,20 +52,21 @@ const Header = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axiosInstance.get(`/profile`);
-        const data = response.data;
-        setProfileData(data);
-				
+        const user = auth.currentUser;
+        if (user) {
+          const response = await axiosInstance.get(`/profile`);
+          const data = response.data;
+          setProfileData(data);
+        }
       } catch (error) {
-        showErrorToast("Error getting profile data.")
+        showErrorToast("Error getting profile data.");
       } finally {
         setIsLoading(false);
       }
     };
 		
     fetchData();
-		
-  }, [setProfileData, auth]);
+  }, [isAuth]);
 	
   if (isLoading) {
     return (
@@ -97,19 +102,19 @@ const Header = () => {
                 <Link to="/profile" className="p-2 text-sm font-semibold">
 									Profile
                 </Link>
-                <button onClick={handleLogOut} className="border px-6 py-2 my-4 border-black">
+                <button onClick={()=>{handleLogOut()}} className="border px-6 py-2 my-4 border-black">
 									LogOut
                 </button>
               </>
             ) : null}
             {!isAuth && (
               <>
-                <Link to="/guest" className="p-2 text-sm font-semibold">
+                <Link to="/feed" className="p-2 text-sm font-semibold">
 									Feed
                 </Link>
-                <Link to="/signUp" className="p-2 text-sm font-semibold">
-                  <button className="border rounded-lg bg-sky-500 px-6 py-2 my-4 border-none">SignUp</button>
-                </Link>
+                <button onClick={signUp} className="border rounded-lg bg-sky-500 px-6 py-2 my-4 border-none">
+											Sign Up
+                </button>
               </>
             )}
           </div>

@@ -208,7 +208,6 @@ const CreatePostModal: React.FC<ModalProps> = ({
                           </button>
                         </div>
                         <div className="flex flex-col h-52">
-                          <p className="flex justify-left text-white">Content:</p>
                           <textarea
                             value={postText}
                             onChange={(event) => {
