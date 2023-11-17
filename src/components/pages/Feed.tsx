@@ -16,21 +16,18 @@ const Feed: React.FC = () => {
     try {
       const { data } = await axiosInstance.get(`/feed?page=${page}`);
       if (data.posts) {
-        const posts = data.posts.map((post: Post) => ({
-          ...post,
-        })) as Post[];
-        setAllDataCount(data.countAllData)
+        setAllDataCount(data.countAllData);
         if (page === 1) {
-          setPostList(posts);
+          setPostList(data.posts);
         } else {
-          setPostList((prevPostList) => [...prevPostList, ...posts]);
+          setPostList((prevPostList) => [...prevPostList, ...data.posts]);
         }
       } else {
-        showErrorToast("Error showing posts.")
+        showErrorToast("Error showing posts.");
         setPostList([]);
       }
     } catch (error) {
-      showErrorToast("Error showing posts.")
+      showErrorToast("Error showing posts.");
     }
   };
 	

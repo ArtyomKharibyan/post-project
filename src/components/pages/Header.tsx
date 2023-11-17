@@ -26,7 +26,7 @@ const Header = () => {
 	
   useEffect(() => {
     if (isAuth && (location.pathname === "/guest")) {
-      navigate("/guest")
+      navigate("/feed")
     }
   }, [isAuth])
 	
@@ -102,7 +102,7 @@ const Header = () => {
                 <Link to="/profile" className="p-2 text-sm font-semibold">
 									Profile
                 </Link>
-                <button onClick={()=>{handleLogOut()}} className="border px-6 py-2 my-4 border-black">
+                <button onClick={handleLogOut} className="border px-6 py-2 my-4 border-black">
 									LogOut
                 </button>
               </>
